@@ -1,0 +1,443 @@
+@extends('layouts.app')
+
+@section('page_content')
+<form data-save-bar onsubmit="handleSubmit()" onreset="handleReset()">
+    <s-page heading="Create campaign">
+        <s-link slot="breadcrumb-actions" href="/app/campaigns">
+            Campaigns
+        </s-link>
+
+        <s-section heading="Campaign basics">
+            <s-grid gap="base">
+                <s-text-field
+                    name="campaignTitle"
+                    label="Campaign name"
+                    labelAccessibilityVisibility="visible"
+                    placeholder="Spring sale for VIP customers"
+                    details="Use a name that clearly describes what this campaign does."
+                    required>
+                </s-text-field>
+
+                <s-select
+                    name="campaignType"
+                    label="Campaign type"
+                    labelAccessibilityVisibility="visible"
+                    details="Choose the primary goal or structure of this campaign.">
+                    <s-option value="discount" selected>
+                        Discount
+                    </s-option>
+                    <s-option value="other">Other</s-option>
+                </s-select>
+            </s-grid>
+        </s-section>
+
+        <s-section heading="Customer targeting">
+            <s-box border="base" borderRadius="base" padding="base">
+                <s-stack direction="block" gap="base">
+                    <s-text color="subdued">
+                        Define which customers are eligible.
+                    </s-text>
+
+                    <s-stack
+                        direction="inline"
+                        justifyContent="space-between"
+                        alignItems="center">
+                        <s-stack gap="small-200">
+                            <s-text type="strong">Current filters</s-text>
+                            <s-text color="subdued">
+                                Total spent, last order date, purchased products, and order tags
+                            </s-text>
+                        </s-stack>
+
+                        <s-button
+                            variant="secondary"
+                            commandFor="customer-filters-modal"
+                            command="--show">
+                            Edit filters
+                        </s-button>
+                    </s-stack>
+
+                    <s-divider></s-divider>
+                </s-stack>
+            </s-box>
+        </s-section>
+
+        <s-section heading="Discount code" id="section-discount-code">
+            <s-box border="base" borderRadius="base" padding="base">
+                <s-stack direction="block" gap="base">
+                    <s-text-field
+                        name="discountCode"
+                        label="Discount code"
+                        labelAccessibilityVisibility="visible"
+                        placeholder="SPRING-SALE-25"
+                        details="Enter a code to reuse an existing discount, or generate a new one.">
+                    </s-text-field>
+
+                    <s-stack
+                        direction="inline"
+                        justifyContent="space-between"
+                        alignItems="center">
+                        <s-button variant="secondary" id="generateCodeBtn">Generate code</s-button>
+                    </s-stack>
+                </s-stack>
+            </s-box>
+        </s-section>
+
+        <s-section heading="Discounted products" id="section-discounted-products">
+            <s-box border="base" borderRadius="base" padding="base">
+                <s-stack direction="block" gap="base">
+                    <s-text color="subdued">
+                        Choose which products this campaign applies to.
+                    </s-text>
+
+                    <s-stack
+                        direction="inline"
+                        justifyContent="space-between"
+                        alignItems="center">
+                        <s-stack gap="small-200">
+                            <s-text type="strong">Selected products</s-text>
+                            <s-text color="subdued">No products selected yet</s-text>
+                        </s-stack>
+
+                        <s-button
+                            variant="secondary"
+                            commandFor="products-modal"
+                            command="--show">
+                            Select products
+                        </s-button>
+                    </s-stack>
+
+                    <s-stack>
+                        <s-clickable
+                            border="base"
+                            borderStyle="solid none none none"
+                            paddingInline="base"
+                            paddingBlock="small">
+                            <s-grid
+                                gridTemplateColumns="auto 1fr auto"
+                                gap="base"
+                                alignItems="center">
+                                <s-thumbnail
+                                    size="small"
+                                    src="https://picsum.photos/id/29/80/80"
+                                    alt="Example product thumbnail">
+                                </s-thumbnail>
+                                <s-stack>
+                                    <s-heading>Example product</s-heading>
+                                    <s-text color="subdued">Appears here after selection</s-text>
+                                </s-stack>
+                                <s-button
+                                    variant="tertiary"
+                                    icon="x"
+                                    accessibilityLabel="Remove example product">
+                                </s-button>
+                            </s-grid>
+                        </s-clickable>
+                    </s-stack>
+                </s-stack>
+            </s-box>
+        </s-section>
+
+        <s-section heading="Discount rules" id="section-discount-rules">
+            <s-box border="base" borderRadius="base" padding="base">
+                <s-stack direction="block" gap="large-100">
+                    <s-stack direction="block" gap="base">
+                        <s-heading>Percentage discount</s-heading>
+                        <s-text color="subdued">
+                            Apply a percentage off when the order meets a minimum subtotal.
+                        </s-text>
+                        <s-grid gap="base" gridTemplateColumns="1fr 1fr">
+                            <s-number-field
+                                name="percentageValue"
+                                label="Discount percentage"
+                                labelAccessibilityVisibility="visible"
+                                suffix="%"
+                                min={0}
+                                max={100}
+                                placeholder="10">
+                            </s-number-field>
+                            <s-money-field
+                                name="percentageMinSubtotal"
+                                label="Minimum order subtotal"
+                                labelAccessibilityVisibility="visible"
+                                placeholder="0.00">
+                            </s-money-field>
+                        </s-grid>
+                        <s-switch
+                            name="percentageActive"
+                            label="Enable percentage discount"
+                            labelAccessibilityVisibility="visible">
+                        </s-switch>
+                    </s-stack>
+
+                    <s-divider></s-divider>
+
+                    <s-stack direction="block" gap="base">
+                        <s-heading>Fixed amount discount</s-heading>
+                        <s-text color="subdued">
+                            Take a fixed amount off when the order meets a minimum subtotal.
+                        </s-text>
+                        <s-grid gap="base" gridTemplateColumns="1fr 1fr">
+                            <s-money-field
+                                name="fixedValue"
+                                label="Discount amount"
+                                labelAccessibilityVisibility="visible"
+                                placeholder="0.00">
+                            </s-money-field>
+                            <s-money-field
+                                name="fixedMinSubtotal"
+                                label="Minimum order subtotal"
+                                labelAccessibilityVisibility="visible"
+                                placeholder="0.00">
+                            </s-money-field>
+                        </s-grid>
+                        <s-switch
+                            name="fixedActive"
+                            label="Enable fixed discount"
+                            labelAccessibilityVisibility="visible">
+                        </s-switch>
+                    </s-stack>
+
+                    <s-divider></s-divider>
+
+                    <s-stack direction="block" gap="base">
+                        <s-heading>Shipping discount</s-heading>
+                        <s-text color="subdued">
+                            Reduce shipping costs when the customer spends a minimum amount.
+                        </s-text>
+                        <s-grid gap="base" gridTemplateColumns="1fr 1fr">
+                            <s-money-field
+                                name="shippingDiscountAmount"
+                                label="Shipping discount amount"
+                                labelAccessibilityVisibility="visible"
+                                placeholder="0.00">
+                            </s-money-field>
+                            <s-money-field
+                                name="shippingMinSubtotal"
+                                label="Minimum order subtotal"
+                                labelAccessibilityVisibility="visible"
+                                placeholder="0.00">
+                            </s-money-field>
+                        </s-grid>
+                        <s-switch
+                            name="shippingActive"
+                            label="Enable shipping discount"
+                            labelAccessibilityVisibility="visible">
+                        </s-switch>
+                    </s-stack>
+                </s-stack>
+            </s-box>
+        </s-section>
+
+        <s-section heading="Campaign scheduling">
+            <s-stack direction="block" gap="base">
+                <s-text color="subdued">
+                    Control when this campaign runs and how long each discount code remains valid.
+                </s-text>
+
+                <s-choice-list
+                    id="campaign-schedule-mode"
+                    label="Schedule type"
+                    labelAccessibilityVisibility="visible"
+                    name="scheduleType">
+                    <s-choice value="monthly" selected>
+                        Monthly schedule
+                    </s-choice>
+
+                    <s-choice value="custom">
+                        Custom schedule
+                    </s-choice>
+                </s-choice-list>
+
+                <s-stack direction="block" gap="base" id="stack-monthly">
+                    <s-grid gap="base" gridTemplateColumns="1fr 1fr">
+                        <s-select
+                            name="monthlyFrequency"
+                            label="Repeat every"
+                            labelAccessibilityVisibility="visible"
+                            details="Number of months between each campaign run.">
+                            <s-option value="1" selected>Every month</s-option>
+                            <s-option value="2">Every 2 months</s-option>
+                            <s-option value="3">Every 3 months</s-option>
+                            <s-option value="3">Every 4 months</s-option>
+                            <s-option value="3">Every 5 months</s-option>
+                            <s-option value="3">Every 6 months</s-option>
+                            <s-option value="3">Every 7 months</s-option>
+                            <s-option value="3">Every 8 months</s-option>
+                            <s-option value="3">Every 9 months</s-option>
+                            <s-option value="3">Every 10 months</s-option>
+                            <s-option value="3">Every 11 months</s-option>
+                            <s-option value="12">Every 12 months</s-option>
+                        </s-select>
+
+                        <s-select
+                            name="monthlyValidity"
+                            label="Discount validity"
+                            labelAccessibilityVisibility="visible"
+                            details="How long each discount code is valid after it starts.">
+                            <s-option value="2" selected>2 days</s-option>
+                            <s-option value="4">4 days</s-option>
+                            <s-option value="6">6 days</s-option>
+                            <s-option value="8">8 days</s-option>
+                            <s-option value="10">10 days</s-option>
+                        </s-select>
+                    </s-grid>
+                </s-stack>
+
+                <s-stack direction="block" gap="base" id="stack-custom">
+                    <s-grid gap="base" gridTemplateColumns="1fr 1fr">
+                        <s-date-field
+                            name="customStartDate"
+                            label="Start date"
+                            labelAccessibilityVisibility="visible"
+                            details="The date when this campaign first becomes active."></s-date-field>
+
+                        <s-select
+                            id="field-custom-validity"
+                            name="customValidity"
+                            label="Discount validity"
+                            labelAccessibilityVisibility="visible"
+                            details="How long the discount remains valid after the start date.">
+                            <s-option value="2" selected>2 days</s-option>
+                            <s-option value="4">4 days</s-option>
+                            <s-option value="6">6 days</s-option>
+                            <s-option value="8">8 days</s-option>
+                            <s-option value="10">10 days</s-option>
+                        </s-select>
+                    </s-grid>
+                </s-stack>
+            </s-stack>
+        </s-section>
+
+        <s-box slot="aside">
+            <s-section heading="Campaign summary">
+                <s-unordered-list>
+                    <s-list-item>
+                        <s-text type="strong">Status:</s-text> Draft
+                    </s-list-item>
+                    <s-list-item>
+                        <s-text type="strong">Type:</s-text> Discount
+                    </s-list-item>
+                    <s-list-item>
+                        <s-text type="strong">Targeting:</s-text> Based on spend,
+                        recency, products, and tags
+                    </s-list-item>
+                    <s-list-item>
+                        <s-text type="strong">Discounts enabled:</s-text> Percentage,
+                        fixed, shipping
+                    </s-list-item>
+                </s-unordered-list>
+            </s-section>
+        </s-box>
+
+    </s-page>
+
+    <s-modal
+        id="customer-filters-modal"
+        heading="Customer filters"
+        size="base"
+        padding="base">
+        <s-stack direction="block" gap="large-100">
+            <s-section heading="Total amount spent">
+                <s-text color="subdued">
+                    Filter customers by the total amount they have spent across all
+                    orders.
+                </s-text>
+                <s-grid gap="base" gridTemplateColumns="1fr 1fr">
+                    <s-money-field
+                        name="totalSpentFrom"
+                        label="From"
+                        labelAccessibilityVisibility="visible"
+                        placeholder="0.00">
+                    </s-money-field>
+                    <s-money-field
+                        name="totalSpentTo"
+                        label="To"
+                        labelAccessibilityVisibility="visible"
+                        placeholder="500.00">
+                    </s-money-field>
+                </s-grid>
+            </s-section>
+
+            <s-section heading="Last ordered date">
+                <s-text color="subdued">
+                    Choose a date range for the customer’s most recent order.
+                </s-text>
+                <s-grid gap="base" gridTemplateColumns="1fr 1fr">
+                    <s-date-field
+                        name="lastOrderFrom"
+                        label="From"
+                        labelAccessibilityVisibility="visible">
+                    </s-date-field>
+                    <s-date-field
+                        name="lastOrderTo"
+                        label="To"
+                        labelAccessibilityVisibility="visible">
+                    </s-date-field>
+                </s-grid>
+            </s-section>
+
+            <s-section heading="Products purchased">
+                <s-stack direction="inline" gap="base">
+                    <s-text color="subdued">
+                        Target customers who have purchased specific products.
+                    </s-text>
+
+                    <s-button
+                        variant="secondary"
+                        commandFor="products-modal"
+                        command="--show">
+                        Choose products
+                    </s-button>
+                </s-stack>
+            </s-section>
+
+            <s-section heading="Order tags">
+                <s-text color="subdued">
+                    Filter customers whose orders contain specific tags.
+                </s-text>
+
+                <s-stack direction="block" gap="base">
+                    <s-grid
+                        gridTemplateColumns="1fr auto"
+                        gap="small-200"
+                        alignItems="center">
+                        <s-text-field
+                            name="orderTagInput"
+                            label="Add tag"
+                            labelAccessibilityVisibility="exclusive"
+                            placeholder="VIP, newsletter, high-value">
+                        </s-text-field>
+                        <s-button variant="secondary">Add</s-button>
+                    </s-grid>
+
+                    <s-stack direction="inline" gap="small-400">
+                        <s-clickable-chip removable>VIP</s-clickable-chip>
+                        <s-clickable-chip removable>Repeat-buyer</s-clickable-chip>
+                    </s-stack>
+                </s-stack>
+            </s-section>
+        </s-stack>
+
+        <s-button
+            slot="primary-action"
+            variant="primary"
+            commandFor="customer-filters-modal"
+            command="--hide">
+            Apply filters
+        </s-button>
+        <s-button
+            slot="secondary-actions"
+            commandFor="customer-filters-modal"
+            command="--hide">
+            Cancel
+        </s-button>
+    </s-modal>
+
+</form>
+@endsection
+
+@section('scripts')
+@parent
+<script src="{{ asset('js/create-campaign.js') }}"></script>
+@endsection
