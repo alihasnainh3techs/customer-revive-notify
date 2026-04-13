@@ -1,6 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\TemplateController;
 
 Route::middleware(['verify.shopify'])->group(function () {
     Route::get('/', function () {
@@ -12,6 +14,13 @@ Route::middleware(['verify.shopify'])->group(function () {
     })->name('create-campaign');
 
     Route::get('/settings', function () {
-        return view('settings');
+        $templates = Auth::user()
+            ->templates()
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('settings', compact('templates'));
     })->name('settings');
+
+    Route::resource('templates', TemplateController::class);
 });

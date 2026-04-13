@@ -1,0 +1,13 @@
+.var-group {
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.tab-btn-group {
+    width: fit-content;
+    padding: 3px;
+    background-color: rgb(227, 227, 227);
+    border-radius: 10px;
+    margin-bottom: 15px;
+}

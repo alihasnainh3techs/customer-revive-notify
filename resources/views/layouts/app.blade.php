@@ -1,16 +1,17 @@
 @extends('shopify-app::layouts.default')
 
 @section('styles')
+<script src="https://cdn.shopify.com/shopifycloud/polaris.js"></script>
 <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 @endsection
 
-<script src="https://cdn.shopify.com/shopifycloud/polaris.js"></script>
+@push('scripts')
 <script src="{{ asset('js/app.js') }}"></script>
-@stack('scripts')
+@endpush
 
 @section('content')
 
-{{-- ✅ Shopify Side Navigation Menu --}}
+{{-- Shopify Side Navigation Menu --}}
 <ui-nav-menu>
     <a href="{{ url('/') }}" rel="home">Home</a>
     <a href="{{ url('/campaign') }}">Campaigns</a>
