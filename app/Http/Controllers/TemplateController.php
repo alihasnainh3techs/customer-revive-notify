@@ -42,7 +42,10 @@ class TemplateController extends Controller
             'status.boolean' => 'Status must be true or false.',
         ]);
 
-        $template = Auth::user()->templates()->create([
+        /** @var User $user */
+        $user = Auth::user();
+
+        $template = $user->templates()->create([
             'name'    => $request->name,
             'type'    => $request->type,
             'subject' => $request->type === 'email' ? $request->subject : null,
@@ -58,6 +61,8 @@ class TemplateController extends Controller
 
     public function destroy(Template $template)
     {
+        abort_if($template->user_id !== Auth::id(), 403, 'Unauthorized action.');
+
         $template->delete();
 
         return response()->json([
@@ -67,6 +72,8 @@ class TemplateController extends Controller
 
     public function update(Request $request, Template $template)
     {
+        abort_if($template->user_id !== Auth::id(), 403, 'Unauthorized action.');
+
         $request->validate([
             'name' => [
                 'required',

@@ -48,16 +48,21 @@
             </s-grid>
         </s-section>
         @else
-        <s-section padding="none" accessibilityLabel="Templates table section">
-            <s-table paginate="true" hasPreviousPage="true" hasNextPage="true" nextpage="" previouspage="">
-                <s-stack slot="filters" maxInlineSize="50%">
-                    <s-text-field
-                        label="Search templates"
-                        labelAccessibilityVisibility="exclusive"
-                        icon="search"
-                        autocomplete="off"
-                        placeholder="Searching all templates"></s-text-field>
-                </s-stack>
+        <s-section accessibilityLabel="Templates table section">
+            <s-table
+                id="templates-table"
+                @if($templates->total() > 10)
+                paginate="true"
+                @endif
+
+                @if(!$templates->onFirstPage())
+                hasPreviousPage="true"
+                @endif
+
+                @if($templates->hasMorePages())
+                hasNextPage="true"
+                @endif
+                >
                 <s-table-header-row>
                     <s-table-header listSlot="primary">Name</s-table-header>
                     <s-table-header>Type</s-table-header>
@@ -88,6 +93,7 @@
                                     variant="tertiary"
                                     tone="neutral"
                                     icon="edit"
+                                    onclick='selectTemplate("{{ $template->id }}", "{{ addslashes($template->name) }}", "update", `@json($template)`)'
                                     commandFor="update-template-modal"
                                     command="--show"
                                     accessibilityLabel="Edit template">
@@ -107,6 +113,12 @@
                     @endforeach
                 </s-table-body>
             </s-table>
+            <script>
+                window.__pagination = {
+                    currentPage: Number('{{ $templates->currentPage() }}'),
+                    lastPage: Number('{{ $templates->lastPage() }}'),
+                };
+            </script>
         </s-section>
         @endif
 
@@ -142,7 +154,7 @@
                         padding="small"
                         inlineSize="100%"
                         background="subdued"
-                        onclick="selectType('email')">
+                        onclick="selectType('email','create')">
                         <s-stack alignItems="center">Email</s-stack>
                     </s-clickable>
                 </s-grid-item>
@@ -155,7 +167,7 @@
                         padding="small"
                         inlineSize="100%"
                         background="primary-subdued"
-                        onclick="selectType('message')">
+                        onclick="selectType('message','create')">
                         <s-stack alignItems="center">Message</s-stack>
                     </s-clickable>
                 </s-grid-item>
@@ -210,6 +222,8 @@
 
             <s-divider></s-divider>
 
+            <input type="hidden" name="id" value="">
+
             <s-grid gridTemplateColumns="repeat(12, 1fr)" gap="base">
                 <s-grid-item gridColumn="span 6">
                     <s-clickable
@@ -219,7 +233,7 @@
                         padding="small"
                         inlineSize="100%"
                         background="subdued"
-                        onclick="selectType('email')">
+                        onclick="selectType('email','update')">
                         <s-stack alignItems="center">Email</s-stack>
                     </s-clickable>
                 </s-grid-item>
@@ -232,7 +246,7 @@
                         padding="small"
                         inlineSize="100%"
                         background="primary-subdued"
-                        onclick="selectType('message')">
+                        onclick="selectType('message','update')">
                         <s-stack alignItems="center">Message</s-stack>
                     </s-clickable>
                 </s-grid-item>
@@ -261,7 +275,7 @@
             Close
         </s-button>
         <s-button id="update-template-btn-submit" type="submit" slot="primary-action" variant="primary">
-            Add
+            Update
         </s-button>
 
     </s-modal>

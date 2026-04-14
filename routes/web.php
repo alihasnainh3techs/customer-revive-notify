@@ -1,7 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TemplateController;
 
 Route::middleware(['verify.shopify'])->group(function () {
@@ -9,18 +10,12 @@ Route::middleware(['verify.shopify'])->group(function () {
         return view('welcome');
     })->name('home');
 
-    Route::get('/create-campaign', function () {
-        return view('create-campaign');
-    })->name('create-campaign');
+    Route::resource('create-campaign', CampaignController::class);
 
-    Route::get('/settings', function () {
-        $templates = Auth::user()
-            ->templates()
-            ->orderBy('created_at', 'desc')
-            ->get();
+    Route::post('create-campaign/customer-count', [CampaignController::class, 'getFilteredCustomerCount'])
+        ->name('create-campaign.customer-count');
 
-        return view('settings', compact('templates'));
-    })->name('settings');
+    Route::resource('settings', SettingsController::class);
 
     Route::resource('templates', TemplateController::class);
 });

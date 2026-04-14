@@ -18,6 +18,11 @@
                     required>
                 </s-text-field>
 
+                <s-select label="Campaign status" name="campaignStatus">
+                    <s-option value="1">Active</s-option>
+                    <s-option value="0">Inactive</s-option>
+                </s-select>
+
                 <s-select
                     name="campaignType"
                     label="Campaign type"
@@ -32,7 +37,7 @@
         </s-section>
 
         <s-section heading="Customer targeting">
-            <s-box border="base" borderRadius="base" padding="base">
+            <s-stack border="base" borderRadius="base" gap="small" padding="base">
                 <s-stack direction="block" gap="base">
                     <s-text color="subdued">
                         Define which customers are eligible.
@@ -47,6 +52,8 @@
                             <s-text color="subdued">
                                 Total spent, last order date, purchased products, and order tags
                             </s-text>
+
+                            <s-text type="strong">All customers</s-text> <s-text color="subdued">(No filters applied)</s-text>
                         </s-stack>
 
                         <s-button
@@ -56,16 +63,15 @@
                             Edit filters
                         </s-button>
                     </s-stack>
-
-                    <s-divider></s-divider>
                 </s-stack>
-            </s-box>
+            </s-stack>
         </s-section>
 
         <s-section heading="Discount code" id="section-discount-code">
             <s-box border="base" borderRadius="base" padding="base">
                 <s-stack direction="block" gap="base">
                     <s-text-field
+                        required
                         name="discountCode"
                         label="Discount code"
                         labelAccessibilityVisibility="visible"
@@ -96,46 +102,103 @@
                         alignItems="center">
                         <s-stack gap="small-200">
                             <s-text type="strong">Selected products</s-text>
-                            <s-text color="subdued">No products selected yet</s-text>
+                            <s-text color="subdued" id="selection-summary">No products selected yet</s-text>
                         </s-stack>
 
                         <s-button
                             variant="secondary"
+                            id="select-products-btn"
                             commandFor="products-modal"
                             command="--show">
                             Select products
                         </s-button>
                     </s-stack>
 
-                    <s-stack>
-                        <s-clickable
-                            border="base"
-                            borderStyle="solid none none none"
-                            paddingInline="base"
-                            paddingBlock="small">
-                            <s-grid
-                                gridTemplateColumns="auto 1fr auto"
-                                gap="base"
-                                alignItems="center">
-                                <s-thumbnail
-                                    size="small"
-                                    src="https://picsum.photos/id/29/80/80"
-                                    alt="Example product thumbnail">
-                                </s-thumbnail>
-                                <s-stack>
-                                    <s-heading>Example product</s-heading>
-                                    <s-text color="subdued">Appears here after selection</s-text>
-                                </s-stack>
-                                <s-button
-                                    variant="tertiary"
-                                    icon="x"
-                                    accessibilityLabel="Remove example product">
-                                </s-button>
-                            </s-grid>
-                        </s-clickable>
+                    <s-stack id="product-list-container">
                     </s-stack>
                 </s-stack>
             </s-box>
+        </s-section>
+
+        <s-section heading="Campaign scheduling">
+            <s-stack direction="block" gap="base">
+                <s-text color="subdued">
+                    Control when this campaign runs and how long each discount code remains valid.
+                </s-text>
+
+                <s-choice-list
+                    id="campaign-schedule-mode"
+                    label="Schedule type"
+                    labelAccessibilityVisibility="visible"
+                    name="scheduleType">
+                    <s-choice value="monthly" selected>
+                        Monthly schedule
+                    </s-choice>
+
+                    <s-choice value="custom">
+                        Custom schedule
+                    </s-choice>
+                </s-choice-list>
+
+                <s-stack direction="block" gap="base" id="stack-monthly">
+                    <s-grid gap="base" gridTemplateColumns="1fr 1fr">
+                        <s-select
+                            name="monthlyFrequency"
+                            label="Repeat every"
+                            labelAccessibilityVisibility="visible"
+                            details="Number of months between each campaign run.">
+                            <s-option value="1" selected>Every month</s-option>
+                            <s-option value="2">Every 2 months</s-option>
+                            <s-option value="3">Every 3 months</s-option>
+                            <s-option value="3">Every 4 months</s-option>
+                            <s-option value="3">Every 5 months</s-option>
+                            <s-option value="3">Every 6 months</s-option>
+                            <s-option value="3">Every 7 months</s-option>
+                            <s-option value="3">Every 8 months</s-option>
+                            <s-option value="3">Every 9 months</s-option>
+                            <s-option value="3">Every 10 months</s-option>
+                            <s-option value="3">Every 11 months</s-option>
+                            <s-option value="12">Every 12 months</s-option>
+                        </s-select>
+
+                        <s-select
+                            name="monthlyValidity"
+                            label="Discount validity"
+                            labelAccessibilityVisibility="visible"
+                            details="How long each discount code is valid after it starts.">
+                            <s-option value="2" selected>2 days</s-option>
+                            <s-option value="4">4 days</s-option>
+                            <s-option value="6">6 days</s-option>
+                            <s-option value="8">8 days</s-option>
+                            <s-option value="10">10 days</s-option>
+                        </s-select>
+                    </s-grid>
+                </s-stack>
+
+                <s-stack direction="block" gap="base" id="stack-custom">
+                    <s-grid gap="base" gridTemplateColumns="1fr 1fr">
+                        <s-date-field
+                            required
+                            name="customStartDate"
+                            label="Start date"
+                            labelAccessibilityVisibility="visible"
+                            details="The date when this campaign first becomes active."></s-date-field>
+
+                        <s-select
+                            id="field-custom-validity"
+                            name="customValidity"
+                            label="Discount validity"
+                            labelAccessibilityVisibility="visible"
+                            details="How long the discount remains valid after the start date.">
+                            <s-option value="2" selected>2 days</s-option>
+                            <s-option value="4">4 days</s-option>
+                            <s-option value="6">6 days</s-option>
+                            <s-option value="8">8 days</s-option>
+                            <s-option value="10">10 days</s-option>
+                        </s-select>
+                    </s-grid>
+                </s-stack>
+            </s-stack>
         </s-section>
 
         <s-section heading="Discount rules" id="section-discount-rules">
@@ -229,86 +292,6 @@
             </s-box>
         </s-section>
 
-        <s-section heading="Campaign scheduling">
-            <s-stack direction="block" gap="base">
-                <s-text color="subdued">
-                    Control when this campaign runs and how long each discount code remains valid.
-                </s-text>
-
-                <s-choice-list
-                    id="campaign-schedule-mode"
-                    label="Schedule type"
-                    labelAccessibilityVisibility="visible"
-                    name="scheduleType">
-                    <s-choice value="monthly" selected>
-                        Monthly schedule
-                    </s-choice>
-
-                    <s-choice value="custom">
-                        Custom schedule
-                    </s-choice>
-                </s-choice-list>
-
-                <s-stack direction="block" gap="base" id="stack-monthly">
-                    <s-grid gap="base" gridTemplateColumns="1fr 1fr">
-                        <s-select
-                            name="monthlyFrequency"
-                            label="Repeat every"
-                            labelAccessibilityVisibility="visible"
-                            details="Number of months between each campaign run.">
-                            <s-option value="1" selected>Every month</s-option>
-                            <s-option value="2">Every 2 months</s-option>
-                            <s-option value="3">Every 3 months</s-option>
-                            <s-option value="3">Every 4 months</s-option>
-                            <s-option value="3">Every 5 months</s-option>
-                            <s-option value="3">Every 6 months</s-option>
-                            <s-option value="3">Every 7 months</s-option>
-                            <s-option value="3">Every 8 months</s-option>
-                            <s-option value="3">Every 9 months</s-option>
-                            <s-option value="3">Every 10 months</s-option>
-                            <s-option value="3">Every 11 months</s-option>
-                            <s-option value="12">Every 12 months</s-option>
-                        </s-select>
-
-                        <s-select
-                            name="monthlyValidity"
-                            label="Discount validity"
-                            labelAccessibilityVisibility="visible"
-                            details="How long each discount code is valid after it starts.">
-                            <s-option value="2" selected>2 days</s-option>
-                            <s-option value="4">4 days</s-option>
-                            <s-option value="6">6 days</s-option>
-                            <s-option value="8">8 days</s-option>
-                            <s-option value="10">10 days</s-option>
-                        </s-select>
-                    </s-grid>
-                </s-stack>
-
-                <s-stack direction="block" gap="base" id="stack-custom">
-                    <s-grid gap="base" gridTemplateColumns="1fr 1fr">
-                        <s-date-field
-                            name="customStartDate"
-                            label="Start date"
-                            labelAccessibilityVisibility="visible"
-                            details="The date when this campaign first becomes active."></s-date-field>
-
-                        <s-select
-                            id="field-custom-validity"
-                            name="customValidity"
-                            label="Discount validity"
-                            labelAccessibilityVisibility="visible"
-                            details="How long the discount remains valid after the start date.">
-                            <s-option value="2" selected>2 days</s-option>
-                            <s-option value="4">4 days</s-option>
-                            <s-option value="6">6 days</s-option>
-                            <s-option value="8">8 days</s-option>
-                            <s-option value="10">10 days</s-option>
-                        </s-select>
-                    </s-grid>
-                </s-stack>
-            </s-stack>
-        </s-section>
-
         <s-box slot="aside">
             <s-section heading="Campaign summary">
                 <s-unordered-list>
@@ -347,12 +330,14 @@
                     <s-money-field
                         name="totalSpentFrom"
                         label="From"
+                        id="filter-spent-from"
                         labelAccessibilityVisibility="visible"
                         placeholder="0.00">
                     </s-money-field>
                     <s-money-field
                         name="totalSpentTo"
                         label="To"
+                        id="filter-spent-to"
                         labelAccessibilityVisibility="visible"
                         placeholder="500.00">
                     </s-money-field>
@@ -366,11 +351,13 @@
                 <s-grid gap="base" gridTemplateColumns="1fr 1fr">
                     <s-date-field
                         name="lastOrderFrom"
+                        id="filter-date-from"
                         label="From"
                         labelAccessibilityVisibility="visible">
                     </s-date-field>
                     <s-date-field
                         name="lastOrderTo"
+                        id="filter-date-to"
                         label="To"
                         labelAccessibilityVisibility="visible">
                     </s-date-field>
@@ -382,11 +369,13 @@
                     <s-text color="subdued">
                         Target customers who have purchased specific products.
                     </s-text>
+                </s-stack>
+                <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+                    <s-text color="subdued" id="purchased-products-count">No products selected yet</s-text>
 
                     <s-button
-                        variant="secondary"
-                        commandFor="products-modal"
-                        command="--show">
+                        id="choose-purchased-btn"
+                        variant="secondary">
                         Choose products
                     </s-button>
                 </s-stack>
@@ -398,32 +387,22 @@
                 </s-text>
 
                 <s-stack direction="block" gap="base">
-                    <s-grid
-                        gridTemplateColumns="1fr auto"
-                        gap="small-200"
-                        alignItems="center">
-                        <s-text-field
-                            name="orderTagInput"
-                            label="Add tag"
-                            labelAccessibilityVisibility="exclusive"
-                            placeholder="VIP, newsletter, high-value">
-                        </s-text-field>
-                        <s-button variant="secondary">Add</s-button>
-                    </s-grid>
-
-                    <s-stack direction="inline" gap="small-400">
-                        <s-clickable-chip removable>VIP</s-clickable-chip>
-                        <s-clickable-chip removable>Repeat-buyer</s-clickable-chip>
+                    <s-text-field
+                        id="tag-input-field"
+                        name="orderTagInput"
+                        label="Add tag"
+                        labelAccessibilityVisibility="exclusive"
+                        placeholder="VIP, newsletter, high-value">
+                    </s-text-field>
+                    <s-stack id="chip-container" direction="inline" gap="small-400">
                     </s-stack>
                 </s-stack>
             </s-section>
         </s-stack>
 
-        <s-button
+        <s-button id="apply-filters-btn"
             slot="primary-action"
-            variant="primary"
-            commandFor="customer-filters-modal"
-            command="--hide">
+            variant="primary">
             Apply filters
         </s-button>
         <s-button
