@@ -10,7 +10,7 @@
         <s-section heading="Campaign basics">
             <s-grid gap="base">
                 <s-text-field
-                    name="campaignTitle"
+                    name="campaign_name"
                     label="Campaign name"
                     labelAccessibilityVisibility="visible"
                     placeholder="Spring sale for VIP customers"
@@ -18,13 +18,13 @@
                     required>
                 </s-text-field>
 
-                <s-select label="Campaign status" name="campaignStatus">
+                <s-select label="Campaign status" name="campaign_status">
                     <s-option value="1">Active</s-option>
                     <s-option value="0">Inactive</s-option>
                 </s-select>
 
                 <s-select
-                    name="campaignType"
+                    name="campaign_type"
                     label="Campaign type"
                     labelAccessibilityVisibility="visible"
                     details="Choose the primary goal or structure of this campaign.">
@@ -72,7 +72,7 @@
                 <s-stack direction="block" gap="base">
                     <s-text-field
                         required
-                        name="discountCode"
+                        name="discount_code"
                         label="Discount code"
                         labelAccessibilityVisibility="visible"
                         placeholder="SPRING-SALE-25"
@@ -120,6 +120,32 @@
             </s-box>
         </s-section>
 
+        <s-section heading="Template Selection" padding="base">
+            <s-stack gap="base">
+                <s-select
+                    id="message-template-select"
+                    name="message_template"
+                    label="Message template"
+                    placeholder="Select a message template"
+                    required>
+                    <s-option value="" selected>Select</s-option>
+                    <s-option value="abandoned-cart">Abandoned cart</s-option>
+                    <s-option value="winback">Winback</s-option>
+                </s-select>
+
+                <s-select
+                    id="email-template-select"
+                    name="email_template"
+                    label="Email template"
+                    placeholder="Select an email template"
+                    required>
+                    <s-option value="" selected>Select</s-option>
+                    <s-option value="promo">Promotion template</s-option>
+                    <s-option value="plain-text">Plain text template</s-option>
+                </s-select>
+            </s-stack>
+        </s-section>
+
         <s-section heading="Campaign scheduling">
             <s-stack direction="block" gap="base">
                 <s-text color="subdued">
@@ -128,9 +154,9 @@
 
                 <s-choice-list
                     id="campaign-schedule-mode"
+                    name="schedule_type"
                     label="Schedule type"
-                    labelAccessibilityVisibility="visible"
-                    name="scheduleType">
+                    labelAccessibilityVisibility="visible">
                     <s-choice value="monthly" selected>
                         Monthly schedule
                     </s-choice>
@@ -143,7 +169,7 @@
                 <s-stack direction="block" gap="base" id="stack-monthly">
                     <s-grid gap="base" gridTemplateColumns="1fr 1fr">
                         <s-select
-                            name="monthlyFrequency"
+                            name="monthly_frequency"
                             label="Repeat every"
                             labelAccessibilityVisibility="visible"
                             details="Number of months between each campaign run.">
@@ -162,7 +188,7 @@
                         </s-select>
 
                         <s-select
-                            name="monthlyValidity"
+                            name="monthly_validity"
                             label="Discount validity"
                             labelAccessibilityVisibility="visible"
                             details="How long each discount code is valid after it starts.">
@@ -179,14 +205,14 @@
                     <s-grid gap="base" gridTemplateColumns="1fr 1fr">
                         <s-date-field
                             required
-                            name="customStartDate"
+                            name="custom_start_date"
                             label="Start date"
                             labelAccessibilityVisibility="visible"
                             details="The date when this campaign first becomes active."></s-date-field>
 
                         <s-select
                             id="field-custom-validity"
-                            name="customValidity"
+                            name="custom_validity"
                             label="Discount validity"
                             labelAccessibilityVisibility="visible"
                             details="How long the discount remains valid after the start date.">
@@ -211,23 +237,23 @@
                         </s-text>
                         <s-grid gap="base" gridTemplateColumns="1fr 1fr">
                             <s-number-field
-                                name="percentageValue"
+                                name="percentage_value"
                                 label="Discount percentage"
                                 labelAccessibilityVisibility="visible"
                                 suffix="%"
-                                min={0}
-                                max={100}
+                                min="0"
+                                max="100"
                                 placeholder="10">
                             </s-number-field>
                             <s-money-field
-                                name="percentageMinSubtotal"
+                                name="percentage_min_subtotal"
                                 label="Minimum order subtotal"
                                 labelAccessibilityVisibility="visible"
                                 placeholder="0.00">
                             </s-money-field>
                         </s-grid>
                         <s-switch
-                            name="percentageActive"
+                            name="percentage_active"
                             label="Enable percentage discount"
                             labelAccessibilityVisibility="visible">
                         </s-switch>
@@ -242,20 +268,20 @@
                         </s-text>
                         <s-grid gap="base" gridTemplateColumns="1fr 1fr">
                             <s-money-field
-                                name="fixedValue"
+                                name="fixed_value"
                                 label="Discount amount"
                                 labelAccessibilityVisibility="visible"
                                 placeholder="0.00">
                             </s-money-field>
                             <s-money-field
-                                name="fixedMinSubtotal"
+                                name="fixed_min_subtotal"
                                 label="Minimum order subtotal"
                                 labelAccessibilityVisibility="visible"
                                 placeholder="0.00">
                             </s-money-field>
                         </s-grid>
                         <s-switch
-                            name="fixedActive"
+                            name="fixed_active"
                             label="Enable fixed discount"
                             labelAccessibilityVisibility="visible">
                         </s-switch>
@@ -270,20 +296,20 @@
                         </s-text>
                         <s-grid gap="base" gridTemplateColumns="1fr 1fr">
                             <s-money-field
-                                name="shippingDiscountAmount"
+                                name="shipping_discount_amount"
                                 label="Shipping discount amount"
                                 labelAccessibilityVisibility="visible"
                                 placeholder="0.00">
                             </s-money-field>
                             <s-money-field
-                                name="shippingMinSubtotal"
+                                name="shipping_min_subtotal"
                                 label="Minimum order subtotal"
                                 labelAccessibilityVisibility="visible"
                                 placeholder="0.00">
                             </s-money-field>
                         </s-grid>
                         <s-switch
-                            name="shippingActive"
+                            name="shipping_active"
                             label="Enable shipping discount"
                             labelAccessibilityVisibility="visible">
                         </s-switch>
@@ -313,106 +339,105 @@
             </s-section>
         </s-box>
 
-    </s-page>
-
-    <s-modal
-        id="customer-filters-modal"
-        heading="Customer filters"
-        size="base"
-        padding="base">
-        <s-stack direction="block" gap="large-100">
-            <s-section heading="Total amount spent">
-                <s-text color="subdued">
-                    Filter customers by the total amount they have spent across all
-                    orders.
-                </s-text>
-                <s-grid gap="base" gridTemplateColumns="1fr 1fr">
-                    <s-money-field
-                        name="totalSpentFrom"
-                        label="From"
-                        id="filter-spent-from"
-                        labelAccessibilityVisibility="visible"
-                        placeholder="0.00">
-                    </s-money-field>
-                    <s-money-field
-                        name="totalSpentTo"
-                        label="To"
-                        id="filter-spent-to"
-                        labelAccessibilityVisibility="visible"
-                        placeholder="500.00">
-                    </s-money-field>
-                </s-grid>
-            </s-section>
-
-            <s-section heading="Last ordered date">
-                <s-text color="subdued">
-                    Choose a date range for the customer’s most recent order.
-                </s-text>
-                <s-grid gap="base" gridTemplateColumns="1fr 1fr">
-                    <s-date-field
-                        name="lastOrderFrom"
-                        id="filter-date-from"
-                        label="From"
-                        labelAccessibilityVisibility="visible">
-                    </s-date-field>
-                    <s-date-field
-                        name="lastOrderTo"
-                        id="filter-date-to"
-                        label="To"
-                        labelAccessibilityVisibility="visible">
-                    </s-date-field>
-                </s-grid>
-            </s-section>
-
-            <s-section heading="Products purchased">
-                <s-stack direction="inline" gap="base">
+        <s-modal
+            id="customer-filters-modal"
+            heading="Customer filters"
+            size="base"
+            padding="base">
+            <s-stack direction="block" gap="large-100">
+                <s-section heading="Total amount spent">
                     <s-text color="subdued">
-                        Target customers who have purchased specific products.
+                        Filter customers by the total amount they have spent across all
+                        orders.
                     </s-text>
-                </s-stack>
-                <s-stack direction="inline" justifyContent="space-between" alignItems="center">
-                    <s-text color="subdued" id="purchased-products-count">No products selected yet</s-text>
+                    <s-grid gap="base" gridTemplateColumns="1fr 1fr">
+                        <s-money-field
+                            name="total_spent_from"
+                            label="From"
+                            id="filter-spent-from"
+                            labelAccessibilityVisibility="visible"
+                            placeholder="0.00">
+                        </s-money-field>
+                        <s-money-field
+                            name="total_spent_to"
+                            label="To"
+                            id="filter-spent-to"
+                            labelAccessibilityVisibility="visible"
+                            placeholder="500.00">
+                        </s-money-field>
+                    </s-grid>
+                </s-section>
 
-                    <s-button
-                        id="choose-purchased-btn"
-                        variant="secondary">
-                        Choose products
-                    </s-button>
-                </s-stack>
-            </s-section>
+                <s-section heading="Last ordered date">
+                    <s-text color="subdued">
+                        Choose a date range for the customer’s most recent order.
+                    </s-text>
+                    <s-grid gap="base" gridTemplateColumns="1fr 1fr">
+                        <s-date-field
+                            name="last_order_from"
+                            id="filter-date-from"
+                            label="From"
+                            labelAccessibilityVisibility="visible">
+                        </s-date-field>
+                        <s-date-field
+                            name="last_order_to"
+                            id="filter-date-to"
+                            label="To"
+                            labelAccessibilityVisibility="visible">
+                        </s-date-field>
+                    </s-grid>
+                </s-section>
 
-            <s-section heading="Order tags">
-                <s-text color="subdued">
-                    Filter customers whose orders contain specific tags.
-                </s-text>
-
-                <s-stack direction="block" gap="base">
-                    <s-text-field
-                        id="tag-input-field"
-                        name="orderTagInput"
-                        label="Add tag"
-                        labelAccessibilityVisibility="exclusive"
-                        placeholder="VIP, newsletter, high-value">
-                    </s-text-field>
-                    <s-stack id="chip-container" direction="inline" gap="small-400">
+                <s-section heading="Products purchased">
+                    <s-stack direction="inline" gap="base">
+                        <s-text color="subdued">
+                            Target customers who have purchased specific products.
+                        </s-text>
                     </s-stack>
-                </s-stack>
-            </s-section>
-        </s-stack>
+                    <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+                        <s-text color="subdued" id="purchased-products-count">No products selected yet</s-text>
 
-        <s-button id="apply-filters-btn"
-            slot="primary-action"
-            variant="primary">
-            Apply filters
-        </s-button>
-        <s-button
-            slot="secondary-actions"
-            commandFor="customer-filters-modal"
-            command="--hide">
-            Cancel
-        </s-button>
-    </s-modal>
+                        <s-button
+                            id="choose-purchased-btn"
+                            variant="secondary">
+                            Choose products
+                        </s-button>
+                    </s-stack>
+                </s-section>
 
+                <s-section heading="Order tags">
+                    <s-text color="subdued">
+                        Filter customers whose orders contain specific tags.
+                    </s-text>
+
+                    <s-stack direction="block" gap="base">
+                        <s-text-field
+                            id="tag-input-field"
+                            name="order_tags"
+                            label="Add tag"
+                            labelAccessibilityVisibility="exclusive"
+                            placeholder="VIP, newsletter, high-value">
+                        </s-text-field>
+                        <s-stack id="chip-container" direction="inline" gap="small-400">
+                        </s-stack>
+                    </s-stack>
+                </s-section>
+            </s-stack>
+
+            <s-button id="apply-filters-btn"
+                slot="primary-action"
+                variant="primary">
+                Apply filters
+            </s-button>
+            <s-button
+                slot="secondary-actions"
+                commandFor="customer-filters-modal"
+                command="--hide">
+                Cancel
+            </s-button>
+        </s-modal>
+
+    </s-page>
 </form>
 @endsection
 

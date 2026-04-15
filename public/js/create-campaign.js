@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Selectors ---
-    const campaignTypeSelect = document.querySelector('[name="campaignType"]');
+    const campaignTypeSelect = document.querySelector('[name="campaign_type"]');
     const scheduleChoiceList = document.querySelector('#campaign-schedule-mode');
 
     // Sections to toggle based on Campaign Type
@@ -13,8 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Scheduling Stacks
     const monthlyStack = document.getElementById('stack-monthly');
     const customStack = document.getElementById('stack-custom');
-    const customValidityField = document.querySelector('[name="customValidity"]');
-    const monthlyValidityField = document.querySelector('[name="monthlyValidity"]');
+    const customValidityField = document.querySelector('[name="custom_validity"]');
+    const monthlyValidityField = document.querySelector('[name="monthly_validity"]');
 
     // --- Task 01 & 04: Campaign Type Logic ---
     const handleCampaignTypeChange = () => {
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < 8; i++) {
             result += characters.charAt(Math.floor(Math.random() * characters.length));
         }
-        document.querySelector('[name="discountCode"]').value = result;
+        document.querySelector('[name="discount_code"]').value = result;
     };
 
     // Attach generate listener to the button
@@ -179,6 +179,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selected) {
             selectedProducts = selected;
             renderProducts();
+
+            console.log("Selected Products: ", selectedProducts);
         }
     });
 
@@ -210,8 +212,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function syncFilter(element, category, key) {
         const val = element.value ? element.value.trim() : "";
         filters[category][key] = val !== "" ? val : null;
-
-        console.log(`Updated ${category}.${key}:`, filters[category][key]);
     }
 
     /**
@@ -325,133 +325,10 @@ document.addEventListener('DOMContentLoaded', () => {
     dateFrom.addEventListener('change', () => syncFilter(dateFrom, 'lastOrderDate', 'from'));
     dateTo.addEventListener('change', () => syncFilter(dateTo, 'lastOrderDate', 'to'));
 
-    // --- Error Helpers ---
-
-    /**
-     * Maps controller error keys to their corresponding field element IDs
-     */
-    const errorFieldMap = {
-        spentFrom: 'filter-spent-from',
-        spentTo: 'filter-spent-to',
-        dateFrom: 'filter-date-from',
-        dateTo: 'filter-date-to',
-    };
-
-    /**
-     * Clears all field-level errors and the general banner
-     */
-    function clearErrors() {
-        Object.values(errorFieldMap).forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.removeAttribute('error');
-        });
-
-        const banner = document.getElementById('filter-error-banner');
-        if (banner) banner.remove();
-    }
-
-    /**
-     * Displays field-level errors and/or a general banner
-     * @param {Object} errors - The errors object from the controller response
-     */
-    function showErrors(errors) {
-        Object.entries(errors).forEach(([key, message]) => {
-            if (errorFieldMap[key]) {
-                // Field-level inline error (s-money-field / s-date-field support the error attribute)
-                const el = document.getElementById(errorFieldMap[key]);
-                if (el) el.setAttribute('error', message);
-            } else {
-                // General error (e.g. "filters" key — no single field to attach to)
-                showGeneralError(message);
-            }
-        });
-    }
-
-    /**
-     * Inserts a dismissable error banner at the top of the modal content
-     */
-    function showGeneralError(message) {
-        // Avoid duplicates
-        const existing = document.getElementById('filter-error-banner');
-        if (existing) existing.remove();
-
-        const modalContent = document.querySelector('#customer-filters-modal s-stack');
-        if (!modalContent) return;
-
-        const banner = document.createElement('s-banner');
-        banner.setAttribute('id', 'filter-error-banner');
-        banner.setAttribute('status', 'critical');
-        banner.textContent = message;
-
-        modalContent.prepend(banner);
-    }
-
     // --- Apply Filters Button ---
     const applyBtn = document.getElementById('apply-filters-btn');
 
     applyBtn.addEventListener('click', async () => {
-
         console.log('Final Filters Applied:', filters);
-
-        // 1. Clear any previous errors
-        clearErrors();
-
-        // 2. Lock the button
-        applyBtn.setAttribute('loading', '');
-        applyBtn.setAttribute('disabled', '');
-
-        // 3. Build the payload matching what the controller expects
-        const payload = {
-            tags: filters.tags,
-            purchasedProducts: filters.purchasedProducts.map(p => ({ id: p.id })),
-            totalSpent: {
-                from: filters.totalSpent.from,
-                to: filters.totalSpent.to,
-            },
-            lastOrderDate: {
-                from: filters.lastOrderDate.from,
-                to: filters.lastOrderDate.to,
-            },
-        };
-
-        try {
-            const response = await fetch('/create-campaign/customer-count', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                },
-                body: JSON.stringify(payload),
-            });
-
-            const data = await response.json();
-
-            console.log("Response: ", data);
-
-
-            if (!response.ok) {
-                // 422 validation errors or 502 Shopify failure
-                if (data.errors) {
-                    showErrors(data.errors);
-                } else {
-                    showGeneralError(data.message || 'Something went wrong. Please try again.');
-                }
-                return;
-            }
-
-            // Success — log for now
-            console.log('Customer count response:', data);
-            // data.count     → number of matching customers
-            // data.precision → 'exact' or 'at_least'
-
-        } catch (err) {
-            // Network-level failure
-            showGeneralError('Could not connect to the server. Please check your connection.');
-            console.error('Fetch error:', err);
-        } finally {
-            // Always re-enable the button
-            applyBtn.removeAttribute('loading');
-            applyBtn.removeAttribute('disabled');
-        }
     });
 });

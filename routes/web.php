@@ -12,9 +12,6 @@ Route::middleware(['verify.shopify'])->group(function () {
 
     Route::resource('create-campaign', CampaignController::class);
 
-    Route::post('create-campaign/customer-count', [CampaignController::class, 'getFilteredCustomerCount'])
-        ->name('create-campaign.customer-count');
-
     Route::resource('settings', SettingsController::class);
 
     Route::resource('templates', TemplateController::class);
