@@ -325,12 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
     dateFrom.addEventListener('change', () => syncFilter(dateFrom, 'lastOrderDate', 'from'));
     dateTo.addEventListener('change', () => syncFilter(dateTo, 'lastOrderDate', 'to'));
 
-    // Apply Button Logic
-    document.getElementById('apply-filters-btn').addEventListener('click', () => {
-        console.log('Final Filters Applied:', filters);
-        // Here you would trigger your customer count API call
-    });
-
     // --- Error Helpers ---
 
     /**
@@ -396,6 +390,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const applyBtn = document.getElementById('apply-filters-btn');
 
     applyBtn.addEventListener('click', async () => {
+
+        console.log('Final Filters Applied:', filters);
+
         // 1. Clear any previous errors
         clearErrors();
 
