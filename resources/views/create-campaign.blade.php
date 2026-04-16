@@ -1,9 +1,12 @@
 @extends('layouts.app')
 
 @section('page_content')
-<form data-save-bar onsubmit="handleSubmit()" onreset="handleReset()">
+<form data-save-bar onsubmit="handleSubmit(event)" onreset="handleReset()">
     <s-page heading="Create campaign">
-        <s-link slot="breadcrumb-actions" href="/app/campaigns">
+        <s-link slot="breadcrumb-actions" target="_self" href="{{route('campaigns.index',[
+          'host' => app('request')->input('host'),
+          'shop' => Auth::user()->name
+          ])}}">
             Campaigns
         </s-link>
 
@@ -12,6 +15,7 @@
                 <s-text-field
                     name="campaign_name"
                     label="Campaign name"
+                    autocomplete="off"
                     labelAccessibilityVisibility="visible"
                     placeholder="Spring sale for VIP customers"
                     details="Use a name that clearly describes what this campaign does."
@@ -53,7 +57,7 @@
                                 Total spent, last order date, purchased products, and order tags
                             </s-text>
 
-                            <s-text type="strong">All customers</s-text> <s-text color="subdued">(No filters applied)</s-text>
+                            <s-text type="strong" id="customers-heading">All customers</s-text> <s-text color="subdued" id="customer-filters-summary">(No filters applied)</s-text>
                         </s-stack>
 
                         <s-button
@@ -72,6 +76,7 @@
                 <s-stack direction="block" gap="base">
                     <s-text-field
                         required
+                        autocomplete="off"
                         name="discount_code"
                         label="Discount code"
                         labelAccessibilityVisibility="visible"
@@ -118,32 +123,6 @@
                     </s-stack>
                 </s-stack>
             </s-box>
-        </s-section>
-
-        <s-section heading="Template Selection" padding="base">
-            <s-stack gap="base">
-                <s-select
-                    id="message-template-select"
-                    name="message_template"
-                    label="Message template"
-                    placeholder="Select a message template"
-                    required>
-                    <s-option value="" selected>Select</s-option>
-                    <s-option value="abandoned-cart">Abandoned cart</s-option>
-                    <s-option value="winback">Winback</s-option>
-                </s-select>
-
-                <s-select
-                    id="email-template-select"
-                    name="email_template"
-                    label="Email template"
-                    placeholder="Select an email template"
-                    required>
-                    <s-option value="" selected>Select</s-option>
-                    <s-option value="promo">Promotion template</s-option>
-                    <s-option value="plain-text">Plain text template</s-option>
-                </s-select>
-            </s-stack>
         </s-section>
 
         <s-section heading="Campaign scheduling">
@@ -227,6 +206,39 @@
             </s-stack>
         </s-section>
 
+        <s-section heading="Template Selection" padding="base">
+            <s-stack gap="base">
+                <s-select
+                    id="message-template-select"
+                    name="message_template"
+                    label="Message template"
+                    placeholder="Select a message template"
+                    required>
+                    <s-option value="" selected>Select</s-option>
+
+                    @if($messageTemplate)
+                    <s-option value="{{ $messageTemplate->id }}">
+                        {{ $messageTemplate->name }}
+                    </s-option>
+                    @endif
+                </s-select>
+
+                <s-select
+                    id="email-template-select"
+                    name="email_template"
+                    label="Email template"
+                    placeholder="Select an email template"
+                    required>
+                    <s-option value="" selected>Select</s-option>
+                    @if($emailTemplate)
+                    <s-option value="{{ $emailTemplate->id }}">
+                        {{ $emailTemplate->name }}
+                    </s-option>
+                    @endif
+                </s-select>
+            </s-stack>
+        </s-section>
+
         <s-section heading="Discount rules" id="section-discount-rules">
             <s-box border="base" borderRadius="base" padding="base">
                 <s-stack direction="block" gap="large-100">
@@ -237,6 +249,7 @@
                         </s-text>
                         <s-grid gap="base" gridTemplateColumns="1fr 1fr">
                             <s-number-field
+                                autocomplete="off"
                                 name="percentage_value"
                                 label="Discount percentage"
                                 labelAccessibilityVisibility="visible"
@@ -246,6 +259,7 @@
                                 placeholder="10">
                             </s-number-field>
                             <s-money-field
+                                autocomplete="off"
                                 name="percentage_min_subtotal"
                                 label="Minimum order subtotal"
                                 labelAccessibilityVisibility="visible"
@@ -268,12 +282,14 @@
                         </s-text>
                         <s-grid gap="base" gridTemplateColumns="1fr 1fr">
                             <s-money-field
+                                autocomplete="off"
                                 name="fixed_value"
                                 label="Discount amount"
                                 labelAccessibilityVisibility="visible"
                                 placeholder="0.00">
                             </s-money-field>
                             <s-money-field
+                                autocomplete="off"
                                 name="fixed_min_subtotal"
                                 label="Minimum order subtotal"
                                 labelAccessibilityVisibility="visible"
@@ -296,12 +312,14 @@
                         </s-text>
                         <s-grid gap="base" gridTemplateColumns="1fr 1fr">
                             <s-money-field
+                                autocomplete="off"
                                 name="shipping_discount_amount"
                                 label="Shipping discount amount"
                                 labelAccessibilityVisibility="visible"
                                 placeholder="0.00">
                             </s-money-field>
                             <s-money-field
+                                autocomplete="off"
                                 name="shipping_min_subtotal"
                                 label="Minimum order subtotal"
                                 labelAccessibilityVisibility="visible"
@@ -322,18 +340,16 @@
             <s-section heading="Campaign summary">
                 <s-unordered-list>
                     <s-list-item>
-                        <s-text type="strong">Status:</s-text> Draft
+                        <s-text type="strong">Status:</s-text> <s-text id="summary-status"></s-text>
                     </s-list-item>
                     <s-list-item>
-                        <s-text type="strong">Type:</s-text> Discount
+                        <s-text type="strong">Type:</s-text> <s-text id="summary-type"></s-text>
                     </s-list-item>
                     <s-list-item>
-                        <s-text type="strong">Targeting:</s-text> Based on spend,
-                        recency, products, and tags
+                        <s-text type="strong">Targeting:</s-text> <s-text id="summary-targeting"></s-text>
                     </s-list-item>
                     <s-list-item>
-                        <s-text type="strong">Discounts enabled:</s-text> Percentage,
-                        fixed, shipping
+                        <s-text type="strong">Discounts enabled:</s-text> <s-text id="summary-discounts"></s-text>
                     </s-list-item>
                 </s-unordered-list>
             </s-section>
@@ -345,6 +361,10 @@
             size="base"
             padding="base">
             <s-stack direction="block" gap="large-100">
+                <s-banner id="error-banner" tone="info">
+
+                </s-banner>
+
                 <s-section heading="Total amount spent">
                     <s-text color="subdued">
                         Filter customers by the total amount they have spent across all
@@ -352,6 +372,7 @@
                     </s-text>
                     <s-grid gap="base" gridTemplateColumns="1fr 1fr">
                         <s-money-field
+                            autocomplete="off"
                             name="total_spent_from"
                             label="From"
                             id="filter-spent-from"
@@ -359,6 +380,7 @@
                             placeholder="0.00">
                         </s-money-field>
                         <s-money-field
+                            autocomplete="off"
                             name="total_spent_to"
                             label="To"
                             id="filter-spent-to"
@@ -414,6 +436,7 @@
                         <s-text-field
                             id="tag-input-field"
                             name="order_tags"
+                            autocomplete="off"
                             label="Add tag"
                             labelAccessibilityVisibility="exclusive"
                             placeholder="VIP, newsletter, high-value">
@@ -426,7 +449,9 @@
 
             <s-button id="apply-filters-btn"
                 slot="primary-action"
-                variant="primary">
+                variant="primary"
+                commandFor="customer-filters-modal"
+                command="--hide">
                 Apply filters
             </s-button>
             <s-button

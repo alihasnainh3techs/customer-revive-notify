@@ -14,7 +14,7 @@
 {{-- Shopify Side Navigation Menu --}}
 <ui-nav-menu>
     <a href="{{ url('/') }}" rel="home">Home</a>
-    <a href="{{ url('/campaign') }}">Campaigns</a>
+    <a href="{{ url('/campaigns') }}">Campaigns</a>
     <a href="{{ url('/explore') }}">Explore</a>
     <a href="{{ url('/pricing') }}">Pricing</a>
     <a href="{{ url('/settings') }}">Settings</a>

@@ -10,7 +10,7 @@ Route::middleware(['verify.shopify'])->group(function () {
         return view('welcome');
     })->name('home');
 
-    Route::resource('create-campaign', CampaignController::class);
+    Route::resource('campaigns', CampaignController::class);
 
     Route::resource('settings', SettingsController::class);
 
