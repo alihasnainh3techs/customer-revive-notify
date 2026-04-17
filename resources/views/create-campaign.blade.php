@@ -214,13 +214,14 @@
                     label="Message template"
                     placeholder="Select a message template"
                     required>
+
                     <s-option value="" selected>Select</s-option>
 
-                    @if($messageTemplate)
-                    <s-option value="{{ $messageTemplate->id }}">
-                        {{ $messageTemplate->name }}
+                    @foreach($messageTemplates as $template)
+                    <s-option value="{{ $template->id }}">
+                        {{ $template->name }}
                     </s-option>
-                    @endif
+                    @endforeach
                 </s-select>
 
                 <s-select
@@ -229,12 +230,14 @@
                     label="Email template"
                     placeholder="Select an email template"
                     required>
+
                     <s-option value="" selected>Select</s-option>
-                    @if($emailTemplate)
-                    <s-option value="{{ $emailTemplate->id }}">
-                        {{ $emailTemplate->name }}
+
+                    @foreach($emailTemplates as $template)
+                    <s-option value="{{ $template->id }}">
+                        {{ $template->name }}
                     </s-option>
-                    @endif
+                    @endforeach
                 </s-select>
             </s-stack>
         </s-section>

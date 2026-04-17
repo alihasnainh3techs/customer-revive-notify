@@ -166,6 +166,42 @@ handleScheduleChange();
 // --- State Management ---
 let selectedProducts = [];
 
+if (window.__selected_products.length > 0) {
+    const productMap = {};
+    window.__selected_products.forEach(variantNode => {
+        if (!variantNode?.product) return;
+
+        const prod = variantNode.product;
+        const prodId = prod.id;
+
+        // Create product entry if it doesn't exist yet
+        if (!productMap[prodId]) {
+            let images = [];
+            if (prod.images?.edges?.length) {
+                images = [{
+                    originalSrc: prod.images.edges[0].node.url   // ← matches what renderProducts expects
+                }];
+            }
+
+            productMap[prodId] = {
+                id: prodId,
+                title: prod.title,
+                images: images,
+                variants: []
+            };
+        }
+
+        // Add the variant to this product
+        productMap[prodId].variants.push({
+            id: variantNode.id,
+            title: variantNode.title || 'Default Title',
+            sku: variantNode.sku || null
+        });
+    });
+
+    selectedProducts = Object.values(productMap);
+}
+
 // --- Selectors ---
 const selectBtn = document.getElementById('select-products-btn');
 const listContainer = document.getElementById('product-list-container');
@@ -232,6 +268,8 @@ function renderProducts() {
     });
 }
 
+renderProducts();
+
 /**
  * Removes a specific variant from the selection
  */
@@ -281,6 +319,40 @@ const filters = {
     },
 };
 
+if (window.__purchased_products.length > 0) {
+
+    const purchasedMap = {};
+
+    window.__purchased_products.forEach((variantNode) => {
+        if (!variantNode?.product) return;
+
+        const prod = variantNode.product;
+        const prodId = prod.id;
+
+        if (!purchasedMap[prodId]) {
+            let images = [];
+            if (prod.images?.edges?.length) {
+                images = [{ originalSrc: prod.images.edges[0].node.url }];
+            }
+
+            purchasedMap[prodId] = {
+                id: prodId,
+                title: prod.title,
+                images: images,
+                variants: []
+            };
+        }
+
+        purchasedMap[prodId].variants.push({
+            id: variantNode.id,
+            title: variantNode.title || 'Default Title',
+            sku: variantNode.sku || null
+        });
+    });
+
+    filters.purchasedProducts = Object.values(purchasedMap);
+}
+
 const purchasedBtn = document.getElementById('choose-purchased-btn');
 const countDisplay = document.getElementById('purchased-products-count');
 const spentFrom = document.getElementById('filter-spent-from');
@@ -309,6 +381,9 @@ function updatePurchasedCountUI() {
         countDisplay.textContent = `${count} product${count > 1 ? 's' : ''} selected`;
     }
 }
+
+// Update the count display immediately
+updatePurchasedCountUI();
 
 /**
  * Handle "Products Purchased" Selection
@@ -358,6 +433,45 @@ function renderTags() {
 
         chipContainer.appendChild(chip);
     });
+}
+
+// --- Initialize filters from existing campaign data ---
+if (window.__existing_filters) {
+    const existing = window.__existing_filters;
+
+    // Populate amount fields
+    if (existing.total_spent) {
+        if (existing.total_spent.from !== null) {
+            const spentFromEl = document.getElementById('filter-spent-from');
+            if (spentFromEl) spentFromEl.value = existing.total_spent.from;
+            filters.totalSpent.from = existing.total_spent.from;
+        }
+        if (existing.total_spent.to !== null) {
+            const spentToEl = document.getElementById('filter-spent-to');
+            if (spentToEl) spentToEl.value = existing.total_spent.to;
+            filters.totalSpent.to = existing.total_spent.to;
+        }
+    }
+
+    // Populate date fields
+    if (existing.last_order_date) {
+        if (existing.last_order_date.from) {
+            const dateFromEl = document.getElementById('filter-date-from');
+            if (dateFromEl) dateFromEl.value = existing.last_order_date.from;
+            filters.lastOrderDate.from = existing.last_order_date.from;
+        }
+        if (existing.last_order_date.to) {
+            const dateToEl = document.getElementById('filter-date-to');
+            if (dateToEl) dateToEl.value = existing.last_order_date.to;
+            filters.lastOrderDate.to = existing.last_order_date.to;
+        }
+    }
+
+    // Populate tags
+    if (existing.tags) {
+        filters.tags = existing.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+        renderTags();
+    }
 }
 
 /**
@@ -614,6 +728,8 @@ async function handleSubmit(e) {
         const form = e.target;
         const formData = new FormData(form);
 
+        formData.append('_method', 'PUT');
+
         // Map the full objects to just an array of Variant GIDs
         const selectedVariantIds = selectedProducts.flatMap(product =>
             product.variants.map(variant => variant.id)
@@ -623,12 +739,13 @@ async function handleSubmit(e) {
             product.variants.map(variant => variant.id)
         );
 
+        // const campaignId = formData.get('campaign_id');
         // Append in-memory state that has no real form inputs
         formData.append('selected_products', JSON.stringify(selectedVariantIds));
         formData.append('purchased_products', JSON.stringify(purchasedVariantIds));
         formData.set('order_tags', filters.tags.join(','));
 
-        const response = await fetch('/campaigns', {
+        const response = await fetch(`/campaigns/18`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -639,7 +756,7 @@ async function handleSubmit(e) {
         const data = await response.json();
 
         if (response.ok) {
-            shopify.toast.show(data.message || 'Campaign created successfully.', {
+            shopify.toast.show(data.message || 'Campaign updated successfully.', {
                 duration: 3000,
             });
 
