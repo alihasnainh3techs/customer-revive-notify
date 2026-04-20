@@ -16,8 +16,16 @@
     display: flex;
 }
 
+.d-grid {
+    display: grid;
+}
+
 .gap-2 {
     gap: 0.5rem;
+}
+
+.gap-3 {
+    gap: 1rem;
 }
 
 .align-items-center {
@@ -26,4 +34,14 @@
 
 .text-center {
     text-align: center;
+}
+
+.md-grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+@media screen and (max-width: 768px) {
+    .md-grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
 }
