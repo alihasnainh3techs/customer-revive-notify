@@ -6,6 +6,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\ExploreController;
 use App\Http\Controllers\SmtpConfigurationController;
+use App\Http\Controllers\DeviceController;
 
 Route::middleware(['verify.shopify'])->group(function () {
     Route::get('/', function () {
@@ -21,9 +22,13 @@ Route::middleware(['verify.shopify'])->group(function () {
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::resource('smtp', SmtpConfigurationController::class)
             ->parameters(['smtp' => 'smtpConfiguration']);
-    });
 
-    Route::view('/settings/whatsapp', 'settings.whatsapp')->name('settings.whatsapp');
+        Route::resource('whatsapp', DeviceController::class);
+        // Add custom status route
+        Route::get('whatsapp/status', [DeviceController::class, 'status'])->name('whatsapp.status');
+
+        Route::patch('whatsapp/{device}/toggle-notifications', [DeviceController::class, 'toggleWhatsAppNotifications'])->name('whatsapp.toggle-notifications');
+    });
 
     Route::resource('templates', TemplateController::class);
 });

@@ -35,6 +35,7 @@ return new class extends Migration
             $table->json('selected_products')->nullable();
 
             // Rules and Filters
+            $table->enum('discount_type', ['percentage_discount', 'fixed_amount_discount', 'shipping_discount']);
             $table->json('discount_rules')->nullable();
             $table->json('customer_filters')->nullable();
 

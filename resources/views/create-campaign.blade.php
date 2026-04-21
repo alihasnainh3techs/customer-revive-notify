@@ -155,14 +155,14 @@
                             <s-option value="1" selected>Every month</s-option>
                             <s-option value="2">Every 2 months</s-option>
                             <s-option value="3">Every 3 months</s-option>
-                            <s-option value="3">Every 4 months</s-option>
-                            <s-option value="3">Every 5 months</s-option>
-                            <s-option value="3">Every 6 months</s-option>
-                            <s-option value="3">Every 7 months</s-option>
-                            <s-option value="3">Every 8 months</s-option>
-                            <s-option value="3">Every 9 months</s-option>
-                            <s-option value="3">Every 10 months</s-option>
-                            <s-option value="3">Every 11 months</s-option>
+                            <s-option value="4">Every 4 months</s-option>
+                            <s-option value="5">Every 5 months</s-option>
+                            <s-option value="6">Every 6 months</s-option>
+                            <s-option value="7">Every 7 months</s-option>
+                            <s-option value="8">Every 8 months</s-option>
+                            <s-option value="9">Every 9 months</s-option>
+                            <s-option value="10">Every 10 months</s-option>
+                            <s-option value="11">Every 11 months</s-option>
                             <s-option value="12">Every 12 months</s-option>
                         </s-select>
 
@@ -245,7 +245,16 @@
         <s-section heading="Discount rules" id="section-discount-rules">
             <s-box border="base" borderRadius="base" padding="base">
                 <s-stack direction="block" gap="large-100">
-                    <s-stack direction="block" gap="base">
+                    <s-choice-list
+                        label="Choose Discount type"
+                        name="discount_type"
+                        id="discount-type-choice-list">
+                        <s-choice value="percentage_discount" selected>Percentage discount</s-choice>
+                        <s-choice value="fixed_amount_discount">Fixed amount discount</s-choice>
+                        <s-choice value="shipping_discount">Shipping discount</s-choice>
+                    </s-choice-list>
+
+                    <s-stack direction="block" gap="base" id="stack-percentage">
                         <s-heading>Percentage discount</s-heading>
                         <s-text color="subdued">
                             Apply a percentage off when the order meets a minimum subtotal.
@@ -269,16 +278,9 @@
                                 placeholder="0.00">
                             </s-money-field>
                         </s-grid>
-                        <s-switch
-                            name="percentage_active"
-                            label="Enable percentage discount"
-                            labelAccessibilityVisibility="visible">
-                        </s-switch>
                     </s-stack>
 
-                    <s-divider></s-divider>
-
-                    <s-stack direction="block" gap="base">
+                    <s-stack direction="block" gap="base" id="stack-fixed" style="display: none;">
                         <s-heading>Fixed amount discount</s-heading>
                         <s-text color="subdued">
                             Take a fixed amount off when the order meets a minimum subtotal.
@@ -299,16 +301,9 @@
                                 placeholder="0.00">
                             </s-money-field>
                         </s-grid>
-                        <s-switch
-                            name="fixed_active"
-                            label="Enable fixed discount"
-                            labelAccessibilityVisibility="visible">
-                        </s-switch>
                     </s-stack>
 
-                    <s-divider></s-divider>
-
-                    <s-stack direction="block" gap="base">
+                    <s-stack direction="block" gap="base" id="stack-shipping" style="display: none;">
                         <s-heading>Shipping discount</s-heading>
                         <s-text color="subdued">
                             Reduce shipping costs when the customer spends a minimum amount.
@@ -329,11 +324,6 @@
                                 placeholder="0.00">
                             </s-money-field>
                         </s-grid>
-                        <s-switch
-                            name="shipping_active"
-                            label="Enable shipping discount"
-                            labelAccessibilityVisibility="visible">
-                        </s-switch>
                     </s-stack>
                 </s-stack>
             </s-box>

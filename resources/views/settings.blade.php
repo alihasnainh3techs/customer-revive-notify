@@ -239,7 +239,11 @@
                     </s-grid>
                 </s-clickable>
                 <s-clickable
-                    href="https://apps.shopify.com/planet"
+                    target="_self"
+                    href="{{route('settings.whatsapp.index',[
+                    'host' => app('request')->input('host'),
+                    'shop' => Auth::user()->name
+                    ])}}"
                     border="base"
                     borderRadius="base"
                     padding="base"
@@ -258,7 +262,11 @@
                         </s-box>
                         <s-stack justifyContent="start">
                             <s-button
-                                href="https://apps.shopify.com/planet"
+                                target="_self"
+                                href="{{route('settings.whatsapp.index',[
+                                'host' => app('request')->input('host'),
+                                'shop' => Auth::user()->name
+                                ])}}"
                                 icon="settings"
                                 accessibilityLabel="Configure WhatsApp QR Connect notifications"></s-button>
                         </s-stack>

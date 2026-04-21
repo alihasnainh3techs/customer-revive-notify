@@ -5,7 +5,7 @@
 <script>
     window.__selected_products = @json($productsData);
     window.__purchased_products = @json($purchasedProductsData);
-    window.__existing_filters = @json($campaign->customer_filters);
+    window.__existing_filters = @json($campaign - > customer_filters);
 </script>
 
 <form data-save-bar onsubmit="handleSubmit(event)" onreset="handleReset()">
@@ -268,8 +268,17 @@
             <s-box border="base" borderRadius="base" padding="base">
                 <s-stack direction="block" gap="large-100">
 
+                    <s-choice-list
+                        label="Choose Discount type"
+                        name="discount_type"
+                        id="discount-type-choice-list">
+                        <s-choice value="percentage_discount" selected>Percentage discount</s-choice>
+                        <s-choice value="fixed_amount_discount">Fixed amount discount</s-choice>
+                        <s-choice value="shipping_discount">Shipping discount</s-choice>
+                    </s-choice-list>
+
                     {{-- Percentage Discount --}}
-                    <s-stack direction="block" gap="base">
+                    <s-stack direction="block" gap="base" id="stack-percentage">
                         <s-heading>Percentage discount</s-heading>
                         <s-text color="subdued">
                             Apply a percentage off when the order meets a minimum subtotal.
@@ -295,19 +304,10 @@
                                 placeholder="0.00">
                             </s-money-field>
                         </s-grid>
-                        <s-switch
-                            name="percentage_active"
-                            label="Enable percentage discount"
-                            {{-- Check if active is true in the JSON --}}
-                            @if(!empty($campaign->discount_rules['percentage']['active'])) checked @endif
-                            labelAccessibilityVisibility="visible">
-                        </s-switch>
                     </s-stack>
 
-                    <s-divider></s-divider>
-
                     {{-- Fixed Amount Discount --}}
-                    <s-stack direction="block" gap="base">
+                    <s-stack direction="block" gap="base" id="stack-fixed" style="display: none;">
                         <s-heading>Fixed amount discount</s-heading>
                         <s-text color="subdued">
                             Take a fixed amount off when the order meets a minimum subtotal.
@@ -330,18 +330,10 @@
                                 placeholder="0.00">
                             </s-money-field>
                         </s-grid>
-                        <s-switch
-                            name="fixed_active"
-                            label="Enable fixed discount"
-                            @if(!empty($campaign->discount_rules['fixed']['active'])) checked @endif
-                            labelAccessibilityVisibility="visible">
-                        </s-switch>
                     </s-stack>
 
-                    <s-divider></s-divider>
-
                     {{-- Shipping Discount --}}
-                    <s-stack direction="block" gap="base">
+                    <s-stack direction="block" gap="base" id="stack-shipping" style="display: none;">
                         <s-heading>Shipping discount</s-heading>
                         <s-text color="subdued">
                             Reduce shipping costs when the customer spends a minimum amount.

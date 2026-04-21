@@ -19,6 +19,7 @@ class Campaign extends Model
         'custom_start_date',
         'custom_validity',
         'selected_products',
+        'discount_type',
         'discount_rules',
         'customer_filters',
         'message_template_id',

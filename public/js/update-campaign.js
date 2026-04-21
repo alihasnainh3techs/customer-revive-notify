@@ -739,13 +739,13 @@ async function handleSubmit(e) {
             product.variants.map(variant => variant.id)
         );
 
-        // const campaignId = formData.get('campaign_id');
+        const campaignId = formData.get('campaign_id');
         // Append in-memory state that has no real form inputs
         formData.append('selected_products', JSON.stringify(selectedVariantIds));
         formData.append('purchased_products', JSON.stringify(purchasedVariantIds));
         formData.set('order_tags', filters.tags.join(','));
 
-        const response = await fetch(`/campaigns/18`, {
+        const response = await fetch(`/campaigns/${campaignId}`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,

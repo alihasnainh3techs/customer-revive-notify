@@ -191,11 +191,7 @@ class CampaignController extends Controller
 
         $isDiscount      = $request->input('campaign_type') === 'discount';
         $isCustomSchedule = $request->input('schedule_type') === 'custom';
-
-        // s-switch submits 'on' when checked; boolean() handles on/1/true/yes
-        $percentageActive = $request->boolean('percentage_active');
-        $fixedActive      = $request->boolean('fixed_active');
-        $shippingActive   = $request->boolean('shipping_active');
+        $discountType = $request->input('discount_type');
 
         // ── Validation Rules ──────────────────────────────────────────────────
         $rules = [
@@ -222,17 +218,17 @@ class CampaignController extends Controller
         }
 
         // Discount rule fields required only when their switch is enabled
-        if ($isDiscount && $percentageActive) {
+        if ($isDiscount && $discountType === 'percentage_discount') {
             $rules['percentage_value']       = ['required', 'numeric', 'min:0', 'max:100'];
             $rules['percentage_min_subtotal'] = ['required', 'numeric', 'min:0'];
         }
 
-        if ($isDiscount && $fixedActive) {
+        if ($isDiscount && $discountType === 'fixed_amount_discount') {
             $rules['fixed_value']       = ['required', 'numeric', 'min:0'];
             $rules['fixed_min_subtotal'] = ['required', 'numeric', 'min:0'];
         }
 
-        if ($isDiscount && $shippingActive) {
+        if ($isDiscount && $discountType === 'shipping_discount') {
             $rules['shipping_discount_amount'] = ['required', 'numeric', 'min:0'];
             $rules['shipping_min_subtotal']    = ['required', 'numeric', 'min:0'];
         }
@@ -253,36 +249,38 @@ class CampaignController extends Controller
             'shipping_min_subtotal.required'  => 'Minimum subtotal is required when shipping discount is enabled.',
         ]);
 
-        // At least one discount rule must be enabled for discount-type campaigns
-        if ($isDiscount) {
-            $validator->after(function ($v) use ($percentageActive, $fixedActive, $shippingActive) {
-                if (!$percentageActive && !$fixedActive && !$shippingActive) {
-                    $v->errors()->add(
-                        'discount_rules',
-                        'At least one discount rule (percentage, fixed, or shipping) must be enabled.'
-                    );
-                }
-            });
-        }
-
         $validator->validate();
 
         // ── Build JSON Columns ─────────────────────────────────────────────────
         $discountRules = $isDiscount ? [
             'percentage' => [
-                'active'      => $percentageActive,
-                'value'       => $percentageActive ? (float) $request->input('percentage_value') : null,
-                'min_subtotal' => $percentageActive ? (float) $request->input('percentage_min_subtotal') : null,
+                'active' => $discountType === 'percentage_discount',
+                'value' => $discountType === 'percentage_discount'
+                    ? (float) $request->input('percentage_value')
+                    : null,
+                'min_subtotal' => $discountType === 'percentage_discount'
+                    ? (float) $request->input('percentage_min_subtotal')
+                    : null,
             ],
+
             'fixed' => [
-                'active'      => $fixedActive,
-                'value'       => $fixedActive ? (float) $request->input('fixed_value') : null,
-                'min_subtotal' => $fixedActive ? (float) $request->input('fixed_min_subtotal') : null,
+                'active' => $discountType === 'fixed_amount_discount',
+                'value' => $discountType === 'fixed_amount_discount'
+                    ? (float) $request->input('fixed_value')
+                    : null,
+                'min_subtotal' => $discountType === 'fixed_amount_discount'
+                    ? (float) $request->input('fixed_min_subtotal')
+                    : null,
             ],
+
             'shipping' => [
-                'active'      => $shippingActive,
-                'value'       => $shippingActive ? (float) $request->input('shipping_discount_amount') : null,
-                'min_subtotal' => $shippingActive ? (float) $request->input('shipping_min_subtotal') : null,
+                'active' => $discountType === 'shipping_discount',
+                'value' => $discountType === 'shipping_discount'
+                    ? (float) $request->input('shipping_discount_amount')
+                    : null,
+                'min_subtotal' => $discountType === 'shipping_discount'
+                    ? (float) $request->input('shipping_min_subtotal')
+                    : null,
             ],
         ] : null;
 
@@ -325,11 +323,7 @@ class CampaignController extends Controller
     {
         $isDiscount      = $request->input('campaign_type') === 'discount';
         $isCustomSchedule = $request->input('schedule_type') === 'custom';
-
-        // s-switch submits 'on' when checked; boolean() handles on/1/true/yes
-        $percentageActive = $request->boolean('percentage_active');
-        $fixedActive      = $request->boolean('fixed_active');
-        $shippingActive   = $request->boolean('shipping_active');
+        $discountType = $request->input('discount_type');
 
         // ── Validation Rules ──────────────────────────────────────────────────
         $rules = [
@@ -354,17 +348,17 @@ class CampaignController extends Controller
         }
 
         // Discount rule fields required only when their switch is enabled
-        if ($isDiscount && $percentageActive) {
+        if ($isDiscount && $discountType === 'percentage_discount') {
             $rules['percentage_value']       = ['required', 'numeric', 'min:0', 'max:100'];
             $rules['percentage_min_subtotal'] = ['required', 'numeric', 'min:0'];
         }
 
-        if ($isDiscount && $fixedActive) {
+        if ($isDiscount && $discountType === 'fixed_amount_discount') {
             $rules['fixed_value']       = ['required', 'numeric', 'min:0'];
             $rules['fixed_min_subtotal'] = ['required', 'numeric', 'min:0'];
         }
 
-        if ($isDiscount && $shippingActive) {
+        if ($isDiscount && $discountType === 'shipping_discount') {
             $rules['shipping_discount_amount'] = ['required', 'numeric', 'min:0'];
             $rules['shipping_min_subtotal']    = ['required', 'numeric', 'min:0'];
         }
@@ -376,45 +370,50 @@ class CampaignController extends Controller
             'custom_start_date.date_format'   => 'Start date must be a valid date (YYYY-MM-DD).',
             'message_template.required'       => 'Please select a message template.',
             'email_template.required'         => 'Please select an email template.',
-            'percentage_value.required'       => 'Discount percentage is required when percentage discount is enabled.',
+            'percentage_value.required'       => 'Discount percentage is required.',
             'percentage_value.max'            => 'Discount percentage cannot exceed 100.',
-            'percentage_min_subtotal.required' => 'Minimum subtotal is required when percentage discount is enabled.',
-            'fixed_value.required'            => 'Discount amount is required when fixed discount is enabled.',
-            'fixed_min_subtotal.required'     => 'Minimum subtotal is required when fixed discount is enabled.',
-            'shipping_discount_amount.required' => 'Shipping discount amount is required when shipping discount is enabled.',
-            'shipping_min_subtotal.required'  => 'Minimum subtotal is required when shipping discount is enabled.',
+            'percentage_min_subtotal.required' => 'Minimum subtotal is required.',
+            'fixed_value.required'            => 'Discount amount is required.',
+            'fixed_min_subtotal.required'     => 'Minimum subtotal is required.',
+            'shipping_discount_amount.required' => 'Shipping discount amount is required.',
+            'shipping_min_subtotal.required'  => 'Minimum subtotal is required.',
         ]);
-
-        // At least one discount rule must be enabled for discount-type campaigns
-        if ($isDiscount) {
-            $validator->after(function ($v) use ($percentageActive, $fixedActive, $shippingActive) {
-                if (!$percentageActive && !$fixedActive && !$shippingActive) {
-                    $v->errors()->add(
-                        'discount_rules',
-                        'At least one discount rule (percentage, fixed, or shipping) must be enabled.'
-                    );
-                }
-            });
-        }
 
         $validator->validate();
 
         // ── Build JSON Columns ─────────────────────────────────────────────────
+        $discountType = $request->input('discount_type');
+
+        // ── Build JSON Columns ─────────────────────────────────────────────────
         $discountRules = $isDiscount ? [
             'percentage' => [
-                'active'      => $percentageActive,
-                'value'       => $percentageActive ? (float) $request->input('percentage_value') : null,
-                'min_subtotal' => $percentageActive ? (float) $request->input('percentage_min_subtotal') : null,
+                'active' => $discountType === 'percentage_discount',
+                'value' => $discountType === 'percentage_discount'
+                    ? (float) $request->input('percentage_value')
+                    : null,
+                'min_subtotal' => $discountType === 'percentage_discount'
+                    ? (float) $request->input('percentage_min_subtotal')
+                    : null,
             ],
+
             'fixed' => [
-                'active'      => $fixedActive,
-                'value'       => $fixedActive ? (float) $request->input('fixed_value') : null,
-                'min_subtotal' => $fixedActive ? (float) $request->input('fixed_min_subtotal') : null,
+                'active' => $discountType === 'fixed_amount_discount',
+                'value' => $discountType === 'fixed_amount_discount'
+                    ? (float) $request->input('fixed_value')
+                    : null,
+                'min_subtotal' => $discountType === 'fixed_amount_discount'
+                    ? (float) $request->input('fixed_min_subtotal')
+                    : null,
             ],
+
             'shipping' => [
-                'active'      => $shippingActive,
-                'value'       => $shippingActive ? (float) $request->input('shipping_discount_amount') : null,
-                'min_subtotal' => $shippingActive ? (float) $request->input('shipping_min_subtotal') : null,
+                'active' => $discountType === 'shipping_discount',
+                'value' => $discountType === 'shipping_discount'
+                    ? (float) $request->input('shipping_discount_amount')
+                    : null,
+                'min_subtotal' => $discountType === 'shipping_discount'
+                    ? (float) $request->input('shipping_min_subtotal')
+                    : null,
             ],
         ] : null;
 
@@ -447,6 +446,7 @@ class CampaignController extends Controller
             'custom_start_date'   => $isCustomSchedule  ? $request->input('custom_start_date')  : null,
             'custom_validity'     => $isCustomSchedule  ? $request->input('custom_validity')    : null,
             'selected_products'   => $request->input('selected_products'),
+            'discount_type'       => $request->input('discount_type'),
             'discount_rules'      => $discountRules,
             'customer_filters'    => $customerFilters,
             'message_template_id' => $request->input('message_template'),

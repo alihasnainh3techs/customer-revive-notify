@@ -87,6 +87,11 @@
 // --- Selectors ---
 const campaignTypeSelect = document.querySelector('[name="campaign_type"]');
 const scheduleChoiceList = document.querySelector('#campaign-schedule-mode');
+// --- Discount Type Selectors ---
+const discountTypeChoiceList = document.querySelector('#discount-type-choice-list');
+const stackPercentage = document.getElementById('stack-percentage');
+const stackFixed = document.getElementById('stack-fixed');
+const stackShipping = document.getElementById('stack-shipping');
 
 // Sections to toggle based on Campaign Type
 const discountSections = [
@@ -151,6 +156,33 @@ const handleScheduleChange = () => {
         customStack.style.display = 'block';
     }
 };
+
+// --- Discount Type Visibility Logic ---
+const handleDiscountTypeChange = () => {
+    const selectedType = discountTypeChoiceList.values[0];
+
+    // Hide all first
+    stackPercentage.style.display = 'none';
+    stackFixed.style.display = 'none';
+    stackShipping.style.display = 'none';
+
+    // Show the selected one
+    if (selectedType === 'percentage_discount') {
+        stackPercentage.style.display = 'block';
+    } else if (selectedType === 'fixed_amount_discount') {
+        stackFixed.style.display = 'block';
+    } else if (selectedType === 'shipping_discount') {
+        stackShipping.style.display = 'block';
+    }
+};
+
+// Attach the listener
+if (discountTypeChoiceList) {
+    discountTypeChoiceList.addEventListener('change', () => {
+        handleDiscountTypeChange();
+        updateDiscountSummary(); // Update summary immediately when changed
+    });
+}
 
 // --- Event Listeners ---
 campaignTypeSelect.addEventListener('change', handleCampaignTypeChange);
@@ -481,38 +513,20 @@ if (applyBtn) {
 }
 
 // 3. Discount Rules Summary
-const discountSwitches = [
-    { switch: document.querySelector('[name="percentage_active"]'), name: 'Percentage' },
-    { switch: document.querySelector('[name="fixed_active"]'), name: 'Fixed amount' },
-    { switch: document.querySelector('[name="shipping_active"]'), name: 'Shipping' }
-];
-
 function updateDiscountSummary() {
-    const activeDiscounts = [];
+    const selectedType = discountTypeChoiceList.values[0];
+    const typeLabels = {
+        'percentage_discount': 'Percentage',
+        'fixed_amount_discount': 'Fixed amount',
+        'shipping_discount': 'Shipping'
+    };
 
-    discountSwitches.forEach(item => {
-        if (item.switch) {
-            // For s-switch, the 'checked' property reflects its state
-            if (item.switch.checked) {
-                activeDiscounts.push(item.name);
-            }
-        }
-    });
-
-    if (activeDiscounts.length === 0) {
-        summaryDiscounts.textContent = 'None';
-    } else {
-        summaryDiscounts.textContent = activeDiscounts.join(', ');
-    }
+    summaryDiscounts.textContent = typeLabels[selectedType] || 'None';
 }
-
-// Add event listeners to all discount switches
-discountSwitches.forEach(item => {
-    item.switch?.addEventListener('change', updateDiscountSummary);
-});
 
 // --- Initialize Summary on Page Load ---
 // Call all update functions once at the start to set the initial correct values.
+handleDiscountTypeChange();
 updateStatusAndTypeSummary();
 updateTargetingSummary();
 updateDiscountSummary();
@@ -556,6 +570,11 @@ function handleReset() {
     updateStatusAndTypeSummary();
     updateTargetingSummary();
     updateDiscountSummary();
+
+    if (discountTypeChoiceList) {
+        discountTypeChoiceList.values = ['percentage_discount'];
+        handleDiscountTypeChange();
+    }
 }
 
 const fieldErrorMap = {

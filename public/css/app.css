@@ -45,3 +45,10 @@
         grid-template-columns: 1fr;
     }
 }
+
+#qr-step {
+    margin-left: auto;
+    margin-right: auto;
+    width: 200px;
+    height: 200px;
+}
