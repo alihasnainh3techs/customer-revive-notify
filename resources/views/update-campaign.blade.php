@@ -5,7 +5,7 @@
 <script>
     window.__selected_products = @json($productsData);
     window.__purchased_products = @json($purchasedProductsData);
-    window.__existing_filters = @json($campaign - > customer_filters);
+    window.__existing_filters = @json($campaign->customer_filters);
 </script>
 
 <form data-save-bar onsubmit="handleSubmit(event)" onreset="handleReset()">
@@ -265,103 +265,60 @@
         </s-section>
 
         <s-section heading="Discount rules" id="section-discount-rules">
+            @php
+            // Determine which discount type is currently active in the database
+            $rules = $campaign->discount_rules;
+            $activeType = 'percentage_discount'; // default
+            if ($rules['fixed']['active'] ?? false) $activeType = 'fixed_amount_discount';
+            if ($rules['shipping']['active'] ?? false) $activeType = 'shipping_discount';
+            @endphp
+
             <s-box border="base" borderRadius="base" padding="base">
                 <s-stack direction="block" gap="large-100">
-
                     <s-choice-list
                         label="Choose Discount type"
                         name="discount_type"
-                        id="discount-type-choice-list">
-                        <s-choice value="percentage_discount" selected>Percentage discount</s-choice>
-                        <s-choice value="fixed_amount_discount">Fixed amount discount</s-choice>
-                        <s-choice value="shipping_discount">Shipping discount</s-choice>
+                        id="discount-type-choice-list"
+                        value="{{ $activeType }}">
+                        <s-choice value="percentage_discount" {{ $activeType === 'percentage_discount' ? 'selected' : '' }}>Percentage discount</s-choice>
+                        <s-choice value="fixed_amount_discount" {{ $activeType === 'fixed_amount_discount' ? 'selected' : '' }}>Fixed amount discount</s-choice>
+                        <s-choice value="shipping_discount" {{ $activeType === 'shipping_discount' ? 'selected' : '' }}>Shipping discount</s-choice>
                     </s-choice-list>
 
-                    {{-- Percentage Discount --}}
-                    <s-stack direction="block" gap="base" id="stack-percentage">
+                    <s-stack direction="block" gap="base" id="stack-percentage"
+                        style="display: {{ $activeType === 'percentage_discount' ? 'block' : 'none' }};">
                         <s-heading>Percentage discount</s-heading>
-                        <s-text color="subdued">
-                            Apply a percentage off when the order meets a minimum subtotal.
-                        </s-text>
+                        <s-text color="subdued">Apply a percentage off when the order meets a minimum subtotal.</s-text>
                         <s-grid gap="base" gridTemplateColumns="1fr 1fr">
-                            <s-number-field
-                                autocomplete="off"
-                                name="percentage_value"
-                                label="Discount percentage"
-                                value="{{ $campaign->discount_rules['percentage']['value'] ?? '' }}"
-                                labelAccessibilityVisibility="visible"
-                                suffix="%"
-                                min="0"
-                                max="100"
-                                placeholder="10">
-                            </s-number-field>
-                            <s-money-field
-                                autocomplete="off"
-                                name="percentage_min_subtotal"
-                                label="Minimum order subtotal"
-                                value="{{ $campaign->discount_rules['percentage']['min_subtotal'] ?? '' }}"
-                                labelAccessibilityVisibility="visible"
-                                placeholder="0.00">
-                            </s-money-field>
+                            <s-number-field name="percentage_value" label="Discount percentage" suffix="%" min="0" max="100"
+                                value="{{ $rules['percentage']['value'] ?? '' }}"></s-number-field>
+                            <s-money-field name="percentage_min_subtotal" label="Minimum order subtotal"
+                                value="{{ $rules['percentage']['min_subtotal'] ?? '' }}"></s-money-field>
                         </s-grid>
                     </s-stack>
 
-                    {{-- Fixed Amount Discount --}}
-                    <s-stack direction="block" gap="base" id="stack-fixed" style="display: none;">
+                    <s-stack direction="block" gap="base" id="stack-fixed"
+                        style="display: {{ $activeType === 'fixed_amount_discount' ? 'block' : 'none' }};">
                         <s-heading>Fixed amount discount</s-heading>
-                        <s-text color="subdued">
-                            Take a fixed amount off when the order meets a minimum subtotal.
-                        </s-text>
+                        <s-text color="subdued">Take a fixed amount off when the order meets a minimum subtotal.</s-text>
                         <s-grid gap="base" gridTemplateColumns="1fr 1fr">
-                            <s-money-field
-                                autocomplete="off"
-                                name="fixed_value"
-                                label="Discount amount"
-                                value="{{ $campaign->discount_rules['fixed']['value'] ?? '' }}"
-                                labelAccessibilityVisibility="visible"
-                                placeholder="0.00">
-                            </s-money-field>
-                            <s-money-field
-                                autocomplete="off"
-                                name="fixed_min_subtotal"
-                                label="Minimum order subtotal"
-                                value="{{ $campaign->discount_rules['fixed']['min_subtotal'] ?? '' }}"
-                                labelAccessibilityVisibility="visible"
-                                placeholder="0.00">
-                            </s-money-field>
+                            <s-money-field name="fixed_value" label="Discount amount"
+                                value="{{ $rules['fixed']['value'] ?? '' }}"></s-money-field>
+                            <s-money-field name="fixed_min_subtotal" label="Minimum order subtotal"
+                                value="{{ $rules['fixed']['min_subtotal'] ?? '' }}"></s-money-field>
                         </s-grid>
                     </s-stack>
 
-                    {{-- Shipping Discount --}}
-                    <s-stack direction="block" gap="base" id="stack-shipping" style="display: none;">
+                    <s-stack direction="block" gap="base" id="stack-shipping"
+                        style="display: {{ $activeType === 'shipping_discount' ? 'block' : 'none' }};">
                         <s-heading>Shipping discount</s-heading>
-                        <s-text color="subdued">
-                            Reduce shipping costs when the customer spends a minimum amount.
-                        </s-text>
+                        <s-text color="subdued">Reduce shipping costs when the customer spends a minimum amount.</s-text>
                         <s-grid gap="base" gridTemplateColumns="1fr 1fr">
-                            <s-money-field
-                                autocomplete="off"
-                                name="shipping_discount_amount"
-                                label="Shipping discount amount"
-                                value="{{ $campaign->discount_rules['shipping']['value'] ?? '' }}"
-                                labelAccessibilityVisibility="visible"
-                                placeholder="0.00">
-                            </s-money-field>
-                            <s-money-field
-                                autocomplete="off"
-                                name="shipping_min_subtotal"
-                                label="Minimum order subtotal"
-                                value="{{ $campaign->discount_rules['shipping']['min_subtotal'] ?? '' }}"
-                                labelAccessibilityVisibility="visible"
-                                placeholder="0.00">
-                            </s-money-field>
+                            <s-money-field name="shipping_discount_amount" label="Shipping discount amount"
+                                value="{{ $rules['shipping']['value'] ?? '' }}"></s-money-field>
+                            <s-money-field name="shipping_min_subtotal" label="Minimum order subtotal"
+                                value="{{ $rules['shipping']['min_subtotal'] ?? '' }}"></s-money-field>
                         </s-grid>
-                        <s-switch
-                            name="shipping_active"
-                            label="Enable shipping discount"
-                            @if(!empty($campaign->discount_rules['shipping']['active'])) checked @endif
-                            labelAccessibilityVisibility="visible">
-                        </s-switch>
                     </s-stack>
                 </s-stack>
             </s-box>

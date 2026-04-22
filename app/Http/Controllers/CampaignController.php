@@ -240,13 +240,13 @@ class CampaignController extends Controller
             'custom_start_date.date_format'   => 'Start date must be a valid date (YYYY-MM-DD).',
             'message_template.required'       => 'Please select a message template.',
             'email_template.required'         => 'Please select an email template.',
-            'percentage_value.required'       => 'Discount percentage is required when percentage discount is enabled.',
+            'percentage_value.required'       => 'Discount percentage is required.',
             'percentage_value.max'            => 'Discount percentage cannot exceed 100.',
-            'percentage_min_subtotal.required' => 'Minimum subtotal is required when percentage discount is enabled.',
-            'fixed_value.required'            => 'Discount amount is required when fixed discount is enabled.',
-            'fixed_min_subtotal.required'     => 'Minimum subtotal is required when fixed discount is enabled.',
-            'shipping_discount_amount.required' => 'Shipping discount amount is required when shipping discount is enabled.',
-            'shipping_min_subtotal.required'  => 'Minimum subtotal is required when shipping discount is enabled.',
+            'percentage_min_subtotal.required' => 'Minimum subtotal is required.',
+            'fixed_value.required'            => 'Discount amount is required.',
+            'fixed_min_subtotal.required'     => 'Minimum subtotal is required.',
+            'shipping_discount_amount.required' => 'Shipping discount amount is required.',
+            'shipping_min_subtotal.required'  => 'Minimum subtotal is required.',
         ]);
 
         $validator->validate();
