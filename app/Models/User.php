@@ -6,7 +6,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Osiset\ShopifyApp\Contracts\ShopModel as IShopModel;
 use Osiset\ShopifyApp\Traits\ShopModel;
-use App\Models\Template;
 
 class User extends Authenticatable implements IShopModel
 {
@@ -24,6 +23,16 @@ class User extends Authenticatable implements IShopModel
 
     public function templates()
     {
-        return $this->hasMany(Template::class, 'user_id');
+        return $this->hasMany(Template::class);
+    }
+
+    public function device()
+    {
+        return $this->hasOne(Device::class);
+    }
+
+    public function smtpConfiguration()
+    {
+        return $this->hasOne(SmtpConfiguration::class);
     }
 }

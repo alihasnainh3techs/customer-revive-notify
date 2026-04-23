@@ -492,7 +492,11 @@ if (window.__existing_filters) {
 
     // Populate tags
     if (existing.tags) {
-        filters.tags = existing.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+        if (typeof existing.tags === "string") {
+            filters.tags = existing.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+        } else {
+            filters.tags = existing.tags;
+        }
         renderTags();
     }
 }

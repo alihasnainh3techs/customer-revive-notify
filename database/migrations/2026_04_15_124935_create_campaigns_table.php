@@ -24,6 +24,8 @@ return new class extends Migration
             $table->enum('campaign_type', ['discount', 'other']);
             $table->string('discount_code')->nullable();
 
+            $table->string('shopify_discount_id')->nullable();
+
             // Scheduling
             $table->enum('schedule_type', ['monthly', 'custom']);
             $table->string('monthly_frequency')->nullable();

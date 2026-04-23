@@ -22,9 +22,4 @@ class SmtpConfiguration extends Model
     protected $casts = [
         'status' => 'boolean',
     ];
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
 }

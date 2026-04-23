@@ -19,9 +19,4 @@ class Device extends Model
         'disconnected_at' => 'date',
         'status' => 'string',
     ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
 }

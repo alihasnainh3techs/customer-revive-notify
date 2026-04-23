@@ -18,9 +18,4 @@ class Template extends Model
     protected $casts = [
         'status' => 'boolean',
     ];
-
-    public function shop()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
 }

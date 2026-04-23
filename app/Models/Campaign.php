@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Campaign extends Model
 {
@@ -13,6 +12,7 @@ class Campaign extends Model
         'campaign_status',
         'campaign_type',
         'discount_code',
+        'shopify_discount_id',
         'schedule_type',
         'monthly_frequency',
         'monthly_validity',
@@ -32,18 +32,8 @@ class Campaign extends Model
         'customer_filters'  => 'array',
     ];
 
-    public function user(): BelongsTo
+    public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function messageTemplate(): BelongsTo
-    {
-        return $this->belongsTo(Template::class, 'message_template_id');
-    }
-
-    public function emailTemplate(): BelongsTo
-    {
-        return $this->belongsTo(Template::class, 'email_template_id');
     }
 }
