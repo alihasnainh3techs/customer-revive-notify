@@ -15,6 +15,8 @@ Route::middleware(['verify.shopify'])->group(function () {
 
     Route::get('/explore', [ExploreController::class, 'index'])->name('explore');
 
+    Route::get('campaigns/{campaign}/logs', [CampaignController::class, 'logs'])->name('campaigns.logs');
+
     Route::resource('campaigns', CampaignController::class);
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');

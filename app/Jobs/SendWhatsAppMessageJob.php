@@ -110,7 +110,7 @@ class SendWhatsAppMessageJob implements ShouldQueue
             'campaign_id'    => $campaign->id,
             'user_id'        => $campaign->user_id,
             'customer_id'    => $customer['id'],
-            'customer_email' => $customer['email'],
+            'customer_phone' => $customer['phone'],
             'customer_name'  => trim(($customer['firstName'] ?? '') . ' ' . ($customer['lastName'] ?? '')),
             'channel'        => 'whatsapp',
             'status'         => $status,

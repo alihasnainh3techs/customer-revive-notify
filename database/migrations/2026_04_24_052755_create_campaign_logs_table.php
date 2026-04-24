@@ -15,7 +15,8 @@ return new class extends Migration
 
             // Shopify customer data snapshot
             $table->string('customer_id');        // Shopify GID e.g. gid://shopify/Customer/123
-            $table->string('customer_email');
+            $table->string('customer_email')->nullable();
+            $table->string('customer_phone')->nullable();
             $table->string('customer_name')->nullable();
 
             $table->enum('channel', ['email', 'whatsapp']);

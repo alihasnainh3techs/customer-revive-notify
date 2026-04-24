@@ -35,6 +35,18 @@ class CampaignController extends Controller
         return view('campaigns', compact('campaigns', 'totalCampaignsCount'));
     }
 
+    public function logs(Request $request, Campaign $campaign)
+    {
+        abort_if($campaign->user_id !== Auth::id(), 403, 'Unauthorized action.');
+
+        // You can fetch your logs here (e.g., $logs = $campaign->logs()->paginate(20);)
+
+        return view('campaign-logs', [
+            'campaign' => $campaign,
+            // 'logs' => $logs
+        ]);
+    }
+
     public function create()
     {
         /** @var \App\Models\User $user */

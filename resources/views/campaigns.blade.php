@@ -138,11 +138,23 @@
                             <s-stack direction="inline" gap="small-200">
                                 <s-button
                                     target="_self"
+                                    href="{{route('campaigns.logs', [
+                                    'campaign' => $campaign->id,
+                                    'host' => app('request')->input('host'),
+                                    'shop' => Auth::user()->name
+                                    ])}}"
+                                    variant="tertiary"
+                                    tone="neutral"
+                                    icon="page-report"
+                                    accessibilityLabel="Campaign logs">
+                                </s-button>
+                                <s-button
+                                    target="_self"
                                     href="{{route('campaigns.edit', [
-                                'campaign' => $campaign->id,
-                                'host' => app('request')->input('host'),
-                                'shop' => Auth::user()->name
-                                ])}}"
+                                    'campaign' => $campaign->id,
+                                    'host' => app('request')->input('host'),
+                                    'shop' => Auth::user()->name
+                                    ])}}"
                                     variant="tertiary"
                                     tone="neutral"
                                     icon="edit"

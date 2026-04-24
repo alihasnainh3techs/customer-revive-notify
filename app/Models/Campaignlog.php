@@ -12,6 +12,7 @@ class CampaignLog extends Model
         'user_id',
         'customer_id',
         'customer_email',
+        'customer_phone',
         'customer_name',
         'channel',
         'status',
