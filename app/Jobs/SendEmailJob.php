@@ -26,7 +26,6 @@ class SendEmailJob implements ShouldQueue
 
     public function handle(TemplateVariableService $variableService): void
     {
-        // $campaign = $this->campaign;
         $campaign = $this->campaign->fresh(['user.smtpConfiguration']);
         $customer = $this->customerData;
 
