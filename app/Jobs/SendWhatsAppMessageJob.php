@@ -14,7 +14,7 @@ class SendWhatsAppMessageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public Campaign $campaign)
+    public function __construct(public Campaign $campaign, public array $customerData)
     {
         //
     }
@@ -23,6 +23,8 @@ class SendWhatsAppMessageJob implements ShouldQueue
     {
         // TODO: implement WhatsApp message sending via BSP integration
         Log::info("SendWhatsAppMessageJob fired for campaign [{$this->campaign->id}] '{$this->campaign->campaign_name}'", [
+            'customer_id'  => $this->customerData['id'] ?? null,
+            'phone'        => $this->customerData['phone'] ?? null,
             'device_id'    => $this->campaign->user->device->id ?? null,
             'session_id'   => $this->campaign->user->device->session_id ?? null,
         ]);

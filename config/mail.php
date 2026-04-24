@@ -37,6 +37,14 @@ return [
 
     'mailers' => [
 
+        'sendgrid' => [
+            'host'       => env('SENDGRID_HOST', 'smtp.sendgrid.net'),
+            'port'       => env('SENDGRID_PORT', 587),
+            'username'   => env('SENDGRID_USERNAME', 'apikey'),
+            'password'   => env('SENDGRID_PASSWORD', ''),
+            'encryption' => env('SENDGRID_ENCRYPTION', 'tls'),
+        ],
+
         'smtp' => [
             'transport' => 'smtp',
             'scheme' => env('MAIL_SCHEME'),
@@ -111,7 +119,7 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+        'address' => env('MAIL_FROM_ADDRESS', 'otn@h3techs.com'),
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\Campaign;
 use App\Services\ShopifyDiscountService;
+use App\Services\ShopifyCustomerService;
 use App\Jobs\SendWhatsAppMessageJob;
 use App\Jobs\SendEmailJob;
 use Illuminate\Support\Facades\Log;
@@ -25,8 +26,10 @@ class ScheduleCampaigns extends Command
      */
     protected $description = 'Process active campaigns and create Shopify discount codes on their scheduled dates';
 
-    public function __construct(private ShopifyDiscountService $discountService)
-    {
+    public function __construct(
+        private ShopifyDiscountService  $discountService,
+        private ShopifyCustomerService  $customerService,
+    ) {
         parent::__construct();
     }
 
@@ -96,6 +99,7 @@ class ScheduleCampaigns extends Command
     {
         match ($campaign->campaign_type) {
             'discount' => $this->handleDiscountCampaign($campaign),
+            'default'  => $this->handleDefaultCampaign($campaign),
             default    => Log::info("Campaign [{$campaign->id}] type '{$campaign->campaign_type}' — no handler yet."),
         };
     }
@@ -128,20 +132,49 @@ class ScheduleCampaigns extends Command
         $device            = $campaign->user->device;
         $smtpConfiguration = $campaign->user->smtpConfiguration;
 
-        // Dispatch WhatsApp job only if device exists and enable_whatsapp is true
-        if ($device && $device->enable_whatsapp) {
-            SendWhatsAppMessageJob::dispatch($campaign);
-            Log::info("Campaign [{$campaign->id}] — SendWhatsAppMessageJob dispatched.");
-        } else {
-            Log::info("Campaign [{$campaign->id}] — WhatsApp skipped (device missing or enable_whatsapp is false).");
+        $shouldSendWhatsApp = $device && $device->enable_whatsapp;
+        $shouldSendEmail    = $smtpConfiguration && $smtpConfiguration->status;
+
+        // Nothing to send — skip customer fetch entirely
+        if (!$shouldSendWhatsApp && !$shouldSendEmail) {
+            Log::info("Campaign [{$campaign->id}] — no notification channels active, skipping.");
+            return;
         }
 
-        // Dispatch email job only if SMTP configuration exists and status is true
-        if ($smtpConfiguration && $smtpConfiguration->status) {
-            SendEmailJob::dispatch($campaign);
-            Log::info("Campaign [{$campaign->id}] — SendEmailJob dispatched.");
-        } else {
-            Log::info("Campaign [{$campaign->id}] — Email skipped (SMTP configuration missing or status is false).");
+        // Fetch all matching customers with full data
+        $customers = $this->customerService->fetchCampaignCustomers($campaign);
+
+        if (empty($customers)) {
+            Log::info("Campaign [{$campaign->id}] — no customers found, no jobs dispatched.");
+            return;
         }
+
+        $emailCount    = 0;
+        $whatsappCount = 0;
+
+        foreach ($customers as $customer) {
+            if ($shouldSendEmail) {
+                SendEmailJob::dispatch($campaign, $customer);
+                $emailCount++;
+            }
+
+            if ($shouldSendWhatsApp) {
+                SendWhatsAppMessageJob::dispatch($campaign, $customer);
+                $whatsappCount++;
+            }
+        }
+
+        Log::info("Campaign [{$campaign->id}] — jobs dispatched.", [
+            'email_jobs'    => $emailCount,
+            'whatsapp_jobs' => $whatsappCount,
+        ]);
+    }
+
+    private function handleDefaultCampaign(Campaign $campaign): void
+    {
+        Log::info("Campaign [{$campaign->id}] — Processing notification-only campaign.");
+
+        // Skip syncDiscount and go straight to dispatching
+        $this->dispatchNotificationJobs($campaign);
     }
 }

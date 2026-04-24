@@ -93,18 +93,18 @@
                                     variant="tertiary"
                                     tone="neutral"
                                     icon="edit"
-                                    onclick='selectTemplate("{{ $template->id }}", "{{ addslashes($template->name) }}", "update", `@json($template)`)'
                                     commandFor="update-template-modal"
                                     command="--show"
+                                    onclick='selectTemplate("{{ $template->id }}", "{{ addslashes($template->name) }}", "update", @json($template))'
                                     accessibilityLabel="Edit template">
                                 </s-button>
                                 <s-button
                                     variant="tertiary"
                                     tone="critical"
                                     icon="delete"
-                                    onclick="selectTemplate('{{ $template->id }}', '{{ addslashes($template->name) }}', 'delete')"
                                     commandFor="delete-template-modal"
                                     command="--show"
+                                    onclick="selectTemplate('{{ $template->id }}', '{{ addslashes($template->name) }}', 'delete')"
                                     accessibilityLabel="Delete template">
                                 </s-button>
                             </s-stack>
