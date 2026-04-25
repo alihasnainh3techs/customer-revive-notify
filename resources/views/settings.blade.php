@@ -192,6 +192,90 @@
                         </s-stack>
                     </s-grid>
                 </s-clickable>
+
+                <s-clickable
+                    href="https://apps.shopify.com/planet"
+                    border="base"
+                    borderRadius="base"
+                    padding="base"
+                    inlineSize="100%">
+                    <s-grid gridTemplateColumns="auto 1fr auto" alignItems="stretch" gap="base">
+                        <s-thumbnail
+                            size="small"
+                            src="https://cdn.shopify.com/app-store/listing_images/8c5469073674bc4bb7aa9adb6f30b97b/icon/CKSuysvvvJADEAE=.jpeg"
+                            alt="Whatomation icon"></s-thumbnail>
+                        <s-box>
+                            <s-stack gap="small-100" direction="inline" alignItems="center">
+                                <s-heading>Whatomation Notifications</s-heading>
+                                <s-badge tone="info">Recommended</s-badge>
+                            </s-stack>
+                            <s-paragraph>
+                                Send whatsapp notifications via Whatomation.
+                            </s-paragraph>
+                        </s-box>
+                        <s-stack justifyContent="start">
+                            @php $installed = in_array('whatomation', $data['apps'] ?? []); @endphp
+                            <s-button
+                                href="https://apps.shopify.com/planet"
+                                icon="{{ $installed ? 'settings' : 'download' }}"
+                                accessibilityLabel="Configure Whatomation whatsapp notifications"></s-button>
+                        </s-stack>
+                    </s-grid>
+                </s-clickable>
+
+                <s-clickable
+                    href="https://apps.shopify.com/planet"
+                    border="base"
+                    borderRadius="base"
+                    padding="base"
+                    inlineSize="100%">
+                    <s-grid gridTemplateColumns="auto 1fr auto" alignItems="stretch" gap="base">
+                        <s-thumbnail
+                            size="small"
+                            src="https://cdn.shopify.com/app-store/listing_images/b8d47fd829850cef4c0c87e26213b9d4/icon/COmB7rzY0o4DEAE=.png"
+                            alt="Texnity icon"></s-thumbnail>
+                        <s-box>
+                            <s-heading>Texnity</s-heading>
+                            <s-paragraph>
+                                Send whatsapp notifications via Texnity.
+                            </s-paragraph>
+                        </s-box>
+                        <s-stack justifyContent="start">
+                            @php $installed = in_array('texnity', $data['apps'] ?? []); @endphp
+                            <s-button
+                                href="https://apps.shopify.com/planet"
+                                icon="{{ $installed ? 'settings' : 'download' }}"
+                                accessibilityLabel="Configure Texnity notifications"></s-button>
+                        </s-stack>
+                    </s-grid>
+                </s-clickable>
+
+                <s-clickable
+                    href="https://apps.shopify.com/planet"
+                    border="base"
+                    borderRadius="base"
+                    padding="base"
+                    inlineSize="100%">
+                    <s-grid gridTemplateColumns="auto 1fr auto" alignItems="stretch" gap="base">
+                        <s-thumbnail
+                            size="small"
+                            src="https://cdn.shopify.com/app-store/listing_images/32423517ef64f95da50dea5837ae5f36/icon/COSPnbL0lu8CEAE=.png"
+                            alt="Branded SMS Pakistan icon"></s-thumbnail>
+                        <s-box>
+                            <s-heading>Branded SMS Pakistan</s-heading>
+                            <s-paragraph>
+                                Send branded SMS notifications via Branded SMS Pakistan.
+                            </s-paragraph>
+                        </s-box>
+                        <s-stack justifyContent="start">
+                            @php $installed = in_array('bsp', $data['apps'] ?? []); @endphp
+                            <s-button
+                                href="https://apps.shopify.com/planet"
+                                icon="{{ $installed ? 'settings' : 'download' }}"
+                                accessibilityLabel="Configure Branded SMS Pakistan notifications"></s-button>
+                        </s-stack>
+                    </s-grid>
+                </s-clickable>
             </div>
         </s-section>
     </div>
