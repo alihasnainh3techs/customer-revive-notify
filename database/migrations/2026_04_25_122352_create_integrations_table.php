@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('integrations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->string('name');
+            $table->string('provider');
             $table->json('configurations')->nullable();
             $table->boolean('status');
             $table->timestamps();

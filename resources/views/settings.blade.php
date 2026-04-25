@@ -250,8 +250,21 @@
                     </s-grid>
                 </s-clickable>
 
+                @php
+                $installed = in_array('bsp', $data['apps'] ?? []);
+
+                $bspUrl = $installed
+                ? route('settings.bsp.index', [
+                'host' => request()->input('host'),
+                'shop' => Auth::user()->name
+                ])
+                : 'https://apps.shopify.com/branded-sms-pakistan';
+                @endphp
                 <s-clickable
-                    href="https://apps.shopify.com/planet"
+                    href="{{ $bspUrl }}"
+                    @if($installed)
+                    target="_self"
+                    @endif
                     border="base"
                     borderRadius="base"
                     padding="base"
@@ -268,9 +281,11 @@
                             </s-paragraph>
                         </s-box>
                         <s-stack justifyContent="start">
-                            @php $installed = in_array('bsp', $data['apps'] ?? []); @endphp
                             <s-button
-                                href="https://apps.shopify.com/planet"
+                                href="{{ $bspUrl }}"
+                                @if($installed)
+                                target="_self"
+                                @endif
                                 icon="{{ $installed ? 'settings' : 'download' }}"
                                 accessibilityLabel="Configure Branded SMS Pakistan notifications"></s-button>
                         </s-stack>

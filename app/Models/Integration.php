@@ -8,7 +8,7 @@ class Integration extends Model
 {
     protected $fillable = [
         'user_id',
-        'name',
+        'provider',
         'configurations',
         'status',
     ];

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BrandedSMSController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TemplateController;
@@ -21,11 +22,14 @@ Route::middleware(['verify.shopify'])->group(function () {
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
 
     Route::prefix('settings')->name('settings.')->group(function () {
+
+        Route::resource('bsp', BrandedSMSController::class);
+
         Route::resource('smtp', SmtpConfigurationController::class)
             ->parameters(['smtp' => 'smtpConfiguration']);
 
         Route::resource('whatsapp', DeviceController::class);
-        // Add custom status route
+
         Route::get('whatsapp/status', [DeviceController::class, 'status'])->name('whatsapp.status');
 
         Route::patch('whatsapp/{device}/toggle-notifications', [DeviceController::class, 'toggleWhatsAppNotifications'])->name('whatsapp.toggle-notifications');
