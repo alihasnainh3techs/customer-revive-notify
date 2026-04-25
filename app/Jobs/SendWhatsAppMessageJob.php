@@ -12,6 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class SendWhatsAppMessageJob implements ShouldQueue
 {
@@ -37,6 +38,13 @@ class SendWhatsAppMessageJob implements ShouldQueue
         $device = $campaign->user->device;
         if (!$device) {
             $reason = 'Device not found';
+            $this->logToDb($campaign, $customer, 'failed', $reason);
+            $this->fail($reason);
+            return;
+        }
+
+        if (!$device->enable_whatsapp) {
+            $reason = 'WhatsApp is disabled on this device';
             $this->logToDb($campaign, $customer, 'failed', $reason);
             $this->fail($reason);
             return;
@@ -79,13 +87,6 @@ class SendWhatsAppMessageJob implements ShouldQueue
             return;
         }
 
-        // TODO: implement WhatsApp message sending via BSP integration
-        Log::info("SendWhatsAppMessageJob fired for campaign [{$this->campaign->id}] '{$this->campaign->campaign_name}'", [
-            'customer_id'  => $this->customerData['id'] ?? null,
-            'phone'        => $this->customerData['phone'] ?? null,
-            'device_id'    => $this->campaign->user->device->id ?? null,
-            'session_id'   => $this->campaign->user->device->session_id ?? null,
-        ]);
         // 6. Log success
         $this->logToDb($campaign, $customer, 'sent');
         Log::info("SendWhatsappMessageJob: whatsapp message sent to [{$customer['phone']}] for campaign [{$campaign->id}].");
@@ -94,7 +95,37 @@ class SendWhatsAppMessageJob implements ShouldQueue
     // -----------------------------------------------------------------
     // Whatsapp notification sending
     // -----------------------------------------------------------------
-    private function send(object $device, string $phone, string $body): void {}
+    private function send(object $device, string $phone, string $body): void
+    {
+        $apiKey  = $device->session_id;
+        $payload = [
+            'apikey' => $apiKey,
+            'to'     => $phone,
+            'msg'    => $body,
+        ];
+
+        try {
+            $response = Http::withHeaders(['Content-Type' => 'application/json'])
+                ->timeout(10)
+                ->post('http://89.250.74.194:4000/whatsapp/api/send-message', $payload);
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('WhatsApp API connection error: ' . $e->getMessage());
+        }
+
+        if (!$response->successful()) {
+            throw new \RuntimeException('WhatsApp API request failed. Status code: ' . $response->status());
+        }
+
+        $result = $response->json();
+
+        if (isset($result['isExist']) && $result['isExist'] === false) {
+            throw new \RuntimeException($result['message'] ?? 'WhatsApp number not found');
+        }
+
+        if (empty($result['success'])) {
+            throw new \RuntimeException($result['message'] ?? 'WhatsApp API returned an unknown error');
+        }
+    }
 
     // -----------------------------------------------------------------
     // DB logging

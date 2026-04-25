@@ -99,7 +99,7 @@ class ScheduleCampaigns extends Command
     {
         match ($campaign->campaign_type) {
             'discount' => $this->handleDiscountCampaign($campaign),
-            'default'  => $this->handleDefaultCampaign($campaign),
+            'other'  => $this->handleDefaultCampaign($campaign),
             default    => Log::info("Campaign [{$campaign->id}] type '{$campaign->campaign_type}' — no handler yet."),
         };
     }

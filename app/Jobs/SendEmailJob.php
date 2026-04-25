@@ -94,11 +94,11 @@ class SendEmailJob implements ShouldQueue
             ? $this->sendgridSettings()
             : $this->customSmtpSettings($smtp);
 
-        $fromEmail = $smtp->custom_from_email ?? config('mail.from.address');
+        $fromEmail = config('mail.from.address');
 
         $fromName = config('app.name');
 
-        $replyTo = $fromEmail ?? config('mail.from.address');
+        $replyTo = $smtp->custom_from_email ?? config('mail.from.address');
 
         $mailer = $this->buildMailer($settings);
 
@@ -113,20 +113,20 @@ class SendEmailJob implements ShouldQueue
 
     private function sendgridSettings(): array
     {
-        return [
-            'host'       => config('mail.sendgrid.host'),
-            'port'       => (int) config('mail.sendgrid.port'),
-            'username'   => config('mail.sendgrid.username'),
-            'password'   => config('mail.sendgrid.password'),
-            'encryption' => config('mail.sendgrid.encryption'),
-        ];
         // return [
-        //     'host'       => env('SENDGRID_HOST', 'smtp.sendgrid.net'),
-        //     'port'       => (int) env('SENDGRID_PORT', 587),
-        //     'username'   => env('SENDGRID_USERNAME', 'apikey'),
-        //     'password'   => env('SENDGRID_PASSWORD', ''),
-        //     'encryption' => env('SENDGRID_ENCRYPTION', 'tls'),
+        //     'host'       => config('mail.sendgrid.host'),
+        //     'port'       => (int) config('mail.sendgrid.port'),
+        //     'username'   => config('mail.sendgrid.username'),
+        //     'password'   => config('mail.sendgrid.password'),
+        //     'encryption' => config('mail.sendgrid.encryption'),
         // ];
+        return [
+            'host'       => env('SENDGRID_HOST', 'smtp.sendgrid.net'),
+            'port'       => (int) env('SENDGRID_PORT', 587),
+            'username'   => env('SENDGRID_USERNAME', 'apikey'),
+            'password'   => env('SENDGRID_PASSWORD', ''),
+            'encryption' => env('SENDGRID_ENCRYPTION', 'tls'),
+        ];
     }
 
     private function customSmtpSettings(object $smtp): array

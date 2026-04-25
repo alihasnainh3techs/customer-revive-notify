@@ -394,7 +394,8 @@ class ShopifyDiscountService
             return ['all' => true];
         }
 
-        return ['variants' => ['variantsToAdd' => $variants]];
+        // return ['variants' => ['variantsToAdd' => $variants]];
+        return ['products' => ['productVariantsToAdd' => $variants]];
     }
 
     private function buildMinimumRequirement(array $rules): ?array

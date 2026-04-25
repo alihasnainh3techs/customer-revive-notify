@@ -39,11 +39,11 @@ class CampaignController extends Controller
     {
         abort_if($campaign->user_id !== Auth::id(), 403, 'Unauthorized action.');
 
-        // You can fetch your logs here (e.g., $logs = $campaign->logs()->paginate(20);)
+        $logs = $campaign->logs()->orderBy('created_at', 'desc')->get();
 
         return view('campaign-logs', [
             'campaign' => $campaign,
-            // 'logs' => $logs
+            'logs' => $logs
         ]);
     }
 

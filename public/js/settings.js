@@ -1,25 +1,27 @@
-const table = document.getElementById('templates-table');
-const { currentPage, lastPage } = window.__pagination;
+if (window.__pagination) {
+    const table = document.getElementById('templates-table');
+    const { currentPage, lastPage } = window.__pagination;
 
-// ── Helper: navigate with updated search params ──────────────────────
-function navigate(page) {
-    const params = new URLSearchParams(window.location.search);
+    // ── Helper: navigate with updated search params ──────────────────────
+    function navigate(page) {
+        const params = new URLSearchParams(window.location.search);
 
-    if (page !== undefined) {
-        page > 1 ? params.set('page', page) : params.delete('page');
+        if (page !== undefined) {
+            page > 1 ? params.set('page', page) : params.delete('page');
+        }
+
+        window.location.href = `${window.location.pathname}?${params.toString()}`;
     }
 
-    window.location.href = `${window.location.pathname}?${params.toString()}`;
+    // ── Pagination events ─────────────────────────────────────────────────
+    table.addEventListener('nextpage', () => {
+        if (currentPage < lastPage) navigate(currentPage + 1);
+    });
+
+    table.addEventListener('previouspage', () => {
+        if (currentPage > 1) navigate(currentPage - 1);
+    });
 }
-
-// ── Pagination events ─────────────────────────────────────────────────
-table.addEventListener('nextpage', () => {
-    if (currentPage < lastPage) navigate(currentPage + 1);
-});
-
-table.addEventListener('previouspage', () => {
-    if (currentPage > 1) navigate(currentPage - 1);
-});
 
 const buttons = document.querySelectorAll('.toggle-tabs-btn');
 const panels = document.querySelectorAll('.tab-content');

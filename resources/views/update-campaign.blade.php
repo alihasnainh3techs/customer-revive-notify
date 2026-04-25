@@ -69,7 +69,7 @@
                         <s-stack gap="small-200">
                             <s-text type="strong">Current filters</s-text>
                             <s-text color="subdued">
-                                Total spent, last order date, purchased products, and order tags
+                                Total spent, last order date, purchased products, and tags
                             </s-text>
 
                             <s-text type="strong" id="customers-heading">All customers</s-text> <s-text color="subdued" id="customer-filters-summary">(No filters applied)</s-text>
@@ -415,9 +415,9 @@
                     </s-stack>
                 </s-section>
 
-                <s-section heading="Order tags">
+                <s-section heading="Customer tags">
                     <s-text color="subdued">
-                        Filter customers whose orders contain specific tags.
+                        Filter customers contain specific tags.
                     </s-text>
 
                     <s-stack direction="block" gap="base">

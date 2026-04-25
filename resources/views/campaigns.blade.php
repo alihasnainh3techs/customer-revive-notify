@@ -125,8 +125,7 @@
                         <s-table-cell>
                             <s-stack direction="inline" gap="small-200" alignItems="center">
                                 <s-text
-                                    color="subdued"
-                                    title="{{ $campaign->updated_at->format('F j, Y \a\t g:i A') }}">
+                                    color="subdued">
                                     {{ $campaign->updated_at->diffForHumans() }}
                                 </s-text>
                                 <span title="{{ $campaign->updated_at->format('F j, Y \a\t g:i A') }}">

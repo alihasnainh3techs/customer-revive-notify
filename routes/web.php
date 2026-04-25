@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TemplateController;
@@ -9,9 +10,7 @@ use App\Http\Controllers\SmtpConfigurationController;
 use App\Http\Controllers\DeviceController;
 
 Route::middleware(['verify.shopify'])->group(function () {
-    Route::get('/', function () {
-        return view('welcome');
-    })->name('home');
+    Route::get('/', [DashboardController::class, 'index'])->name('home');
 
     Route::get('/explore', [ExploreController::class, 'index'])->name('explore');
 

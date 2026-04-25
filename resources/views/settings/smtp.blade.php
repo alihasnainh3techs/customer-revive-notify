@@ -53,10 +53,9 @@
                             {{ ($config->status ?? false) ? 'selected' : '' }}>
                             Active
                         </s-option>
-
                         <s-option
                             value="0"
-                            {{ !($config->status ?? true) ? 'selected' : '' }}>
+                            {{ !($config->status ?? false) ? 'selected' : '' }}>
                             Inactive
                         </s-option>
                     </s-select>
