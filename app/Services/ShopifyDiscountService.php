@@ -29,17 +29,30 @@ class ShopifyDiscountService
         }
     GQL;
 
-    private const QUERY_CUSTOMERS = <<<'GQL'
-        query GetCustomers($query: String!, $after: String) {
-            customers(first: 250, query: $query, after: $after) {
-                pageInfo { hasNextPage endCursor }
-                edges { node { id } }
+    // -----------------------------------------------------------------
+    // GraphQL — mutations: segment
+    // -----------------------------------------------------------------
+
+    private const MUTATION_SEGMENT_CREATE = <<<'GQL'
+        mutation segmentCreate($name: String!, $query: String!) {
+            segmentCreate(name: $name, query: $query) {
+                segment { id }
+                userErrors { field message }
+            }
+        }
+    GQL;
+
+    private const MUTATION_SEGMENT_DELETE = <<<'GQL'
+        mutation segmentDelete($id: ID!) {
+            segmentDelete(id: $id) {
+                deletedSegmentId
+                userErrors { field message }
             }
         }
     GQL;
 
     // -----------------------------------------------------------------
-    // GraphQL — mutations: create
+    // GraphQL — mutations: discount create
     // -----------------------------------------------------------------
 
     private const MUTATION_BASIC_CREATE = <<<'GQL'
@@ -61,7 +74,7 @@ class ShopifyDiscountService
     GQL;
 
     // -----------------------------------------------------------------
-    // GraphQL — mutations: update
+    // GraphQL — mutations: discount update
     // -----------------------------------------------------------------
 
     private const MUTATION_BASIC_UPDATE = <<<'GQL'
@@ -83,7 +96,7 @@ class ShopifyDiscountService
     GQL;
 
     // -----------------------------------------------------------------
-    // GraphQL — mutations: delete
+    // GraphQL — mutations: discount delete
     // -----------------------------------------------------------------
 
     private const MUTATION_DELETE = <<<'GQL'
@@ -103,10 +116,14 @@ class ShopifyDiscountService
      * Sync the Shopify discount code for the given campaign.
      *
      * Decision tree:
-     *   shopify_discount_id is null                          → create fresh
-     *   shopify_discount_id present, not found in Shopify   → create fresh (was manually deleted)
-     *   shopify_discount_id present, code changed           → delete old + create new
-     *   shopify_discount_id present, code unchanged         → update existing
+     *   shopify_discount_id is null                        → create fresh
+     *   shopify_discount_id present, not found in Shopify  → create fresh (manually deleted)
+     *   shopify_discount_id present, code changed          → delete old + create new
+     *   shopify_discount_id present, code unchanged        → update existing
+     *
+     * Segment decision tree (runs before every create/update):
+     *   No active filters       → all: true, clean up old segment if any
+     *   Has active filters      → delete old segment, create fresh one, use customerSegments
      *
      * @throws \App\Exceptions\NoCustomersMatchedException
      */
@@ -121,17 +138,14 @@ class ShopifyDiscountService
             return;
         }
 
-        // We have a stored ID — check if it still exists in Shopify
         $existing = $this->fetchDiscountById($campaign->shopify_discount_id, $shopDomain, $accessToken);
 
         if ($existing === null) {
-            // Manually deleted from Shopify — re-create
             Log::warning("Campaign [{$campaign->id}]: discount ID {$campaign->shopify_discount_id} not found in Shopify (deleted). Re-creating.");
             $this->runCreate($campaign, $shopDomain, $accessToken);
             return;
         }
 
-        // Compare the code string — detect renames
         $shopifyCode = $this->extractCodeFromNode($existing);
 
         if ($shopifyCode !== $campaign->discount_code) {
@@ -141,7 +155,6 @@ class ShopifyDiscountService
             return;
         }
 
-        // Code is unchanged — update the existing discount
         Log::info("Campaign [{$campaign->id}]: updating existing discount {$campaign->shopify_discount_id}.");
         $this->runUpdate($campaign, $shopDomain, $accessToken);
     }
@@ -173,11 +186,11 @@ class ShopifyDiscountService
 
     private function doBasicCreate(
         Campaign $campaign,
-        string $shopDomain,
-        string $accessToken,
-        string $startsAt,
-        string $endsAt,
-        array $customerSel
+        string   $shopDomain,
+        string   $accessToken,
+        string   $startsAt,
+        string   $endsAt,
+        array    $customerSel
     ): array {
         $rules     = $campaign->discount_rules;
         $variables = [
@@ -198,11 +211,11 @@ class ShopifyDiscountService
 
     private function doShippingCreate(
         Campaign $campaign,
-        string $shopDomain,
-        string $accessToken,
-        string $startsAt,
-        string $endsAt,
-        array $customerSel
+        string   $shopDomain,
+        string   $accessToken,
+        string   $startsAt,
+        string   $endsAt,
+        array    $customerSel
     ): array {
         $rules    = $campaign->discount_rules;
         $shipping = $rules['shipping'];
@@ -249,12 +262,12 @@ class ShopifyDiscountService
 
     private function doBasicUpdate(
         Campaign $campaign,
-        string $id,
-        string $shopDomain,
-        string $accessToken,
-        string $startsAt,
-        string $endsAt,
-        array $customerSel
+        string   $id,
+        string   $shopDomain,
+        string   $accessToken,
+        string   $startsAt,
+        string   $endsAt,
+        array    $customerSel
     ): array {
         $rules     = $campaign->discount_rules;
         $variables = [
@@ -276,12 +289,12 @@ class ShopifyDiscountService
 
     private function doShippingUpdate(
         Campaign $campaign,
-        string $id,
-        string $shopDomain,
-        string $accessToken,
-        string $startsAt,
-        string $endsAt,
-        array $customerSel
+        string   $id,
+        string   $shopDomain,
+        string   $accessToken,
+        string   $startsAt,
+        string   $endsAt,
+        array    $customerSel
     ): array {
         $rules    = $campaign->discount_rules;
         $shipping = $rules['shipping'];
@@ -305,7 +318,7 @@ class ShopifyDiscountService
     }
 
     // -----------------------------------------------------------------
-    // Delete
+    // Delete discount
     // -----------------------------------------------------------------
 
     private function deleteDiscount(string $id, string $shopDomain, string $accessToken): void
@@ -317,12 +330,9 @@ class ShopifyDiscountService
     }
 
     // -----------------------------------------------------------------
-    // Fetch by ID
+    // Fetch discount by ID
     // -----------------------------------------------------------------
 
-    /**
-     * Returns the codeDiscountNode array, or null if not found in Shopify.
-     */
     private function fetchDiscountById(string $id, string $shopDomain, string $accessToken): ?array
     {
         $result = $this->graphql($shopDomain, $accessToken, self::QUERY_DISCOUNT_BY_ID, ['id' => $id]);
@@ -330,12 +340,148 @@ class ShopifyDiscountService
         return $result['data']['codeDiscountNode'] ?? null;
     }
 
-    /**
-     * Pull the code string out of a codeDiscountNode response.
-     */
     private function extractCodeFromNode(array $node): ?string
     {
         return $node['codeDiscount']['codes']['edges'][0]['node']['code'] ?? null;
+    }
+
+    // -----------------------------------------------------------------
+    // Customer selection via Shopify Segments
+    // -----------------------------------------------------------------
+
+    /**
+     * Resolve customerSelection block.
+     *
+     * No filters  → { all: true }   + delete old segment if any
+     * Has filters → delete old segment, create fresh one, return { customerSegments: { add: [id] } }
+     *
+     * Segment query uses OR between filter types:
+     *   (amount_spent filters) OR (last_order_date filters) OR (customer_tags filters)
+     */
+    private function resolveCustomerSelection(Campaign $campaign, string $shopDomain, string $accessToken): array
+    {
+        $filters = $campaign->customer_filters;
+
+        if (!$this->hasActiveFilters($filters)) {
+            // Clean up any old segment
+            if (!empty($campaign->shopify_segment_id)) {
+                $this->deleteSegment($campaign->shopify_segment_id, $shopDomain, $accessToken);
+                $campaign->update(['shopify_segment_id' => null]);
+            }
+            return ['all' => true];
+        }
+
+        // Delete old segment — filters may have changed since last run
+        if (!empty($campaign->shopify_segment_id)) {
+            $this->deleteSegment($campaign->shopify_segment_id, $shopDomain, $accessToken);
+        }
+
+        // Build ShopifyQL WHERE clause and create a fresh segment
+        $segmentQuery = $this->buildSegmentQuery($filters);
+        $segmentName  = "crn-campaign-{$campaign->id}-" . now()->format('YmdHis');
+        $segmentId    = $this->createSegment($segmentName, $segmentQuery, $shopDomain, $accessToken);
+
+        $campaign->update(['shopify_segment_id' => $segmentId]);
+
+        Log::info("Campaign [{$campaign->id}]: segment created. Segment ID: {$segmentId}");
+
+        return ['customerSegments' => ['add' => [$segmentId]]];
+    }
+
+    /**
+     * Build a ShopifyQL WHERE clause from campaign filters.
+     *
+     * Each filter type group is wrapped in parentheses.
+     * All groups are joined with OR.
+     * Within a range filter (from + to), conditions are joined with AND.
+     */
+    private function buildSegmentQuery(array $filters): string
+    {
+        $parts = [];
+
+        // amount_spent (customer level)
+        $spentFrom = $filters['total_spent']['from'] ?? null;
+        $spentTo   = $filters['total_spent']['to'] ?? null;
+        if ($spentFrom !== null && $spentTo !== null) {
+            $parts[] = "(amount_spent >= {$spentFrom} AND amount_spent <= {$spentTo})";
+        } elseif ($spentFrom !== null) {
+            $parts[] = "amount_spent >= {$spentFrom}";
+        } elseif ($spentTo !== null) {
+            $parts[] = "amount_spent <= {$spentTo}";
+        }
+
+        // last_order_date (customer level)
+        $dateFrom = $filters['last_order_date']['from'] ?? null;
+        $dateTo   = $filters['last_order_date']['to'] ?? null;
+        if ($dateFrom !== null && $dateTo !== null) {
+            $parts[] = "(last_order_date >= {$dateFrom} AND last_order_date <= {$dateTo})";
+        } elseif ($dateFrom !== null) {
+            $parts[] = "last_order_date >= {$dateFrom}";
+        } elseif ($dateTo !== null) {
+            $parts[] = "last_order_date <= {$dateTo}";
+        }
+
+        // customer_tags — OR between multiple tags
+        $tags = $filters['tags'] ?? [];
+        if (is_string($tags) && $tags !== '') {
+            $tags = array_map('trim', explode(',', $tags));
+        }
+        $tags = array_values(array_filter((array) $tags));
+        if (!empty($tags)) {
+            $tagClauses = array_map(fn($tag) => "customer_tags CONTAINS '{$tag}'", $tags);
+            $parts[]    = '(' . implode(' OR ', $tagClauses) . ')';
+        }
+
+        // All groups joined with OR
+        return implode(' OR ', $parts);
+    }
+
+    private function hasActiveFilters(array $filters): bool
+    {
+        if (!empty($filters['total_spent']['from']) || !empty($filters['total_spent']['to'])) {
+            return true;
+        }
+        if (!empty($filters['last_order_date']['from']) || !empty($filters['last_order_date']['to'])) {
+            return true;
+        }
+        if (!empty($filters['tags'])) {
+            return true;
+        }
+
+        $purchased = $filters['purchased_products'] ?? '[]';
+        if (is_string($purchased)) {
+            $purchased = json_decode($purchased, true) ?? [];
+        }
+
+        return !empty($purchased);
+    }
+
+    // -----------------------------------------------------------------
+    // Segment helpers
+    // -----------------------------------------------------------------
+
+    private function createSegment(string $name, string $query, string $shopDomain, string $accessToken): string
+    {
+        $response = $this->graphql($shopDomain, $accessToken, self::MUTATION_SEGMENT_CREATE, [
+            'name'  => $name,
+            'query' => $query,
+        ]);
+
+        $this->checkErrors($response, 'segmentCreate');
+
+        return $response['data']['segmentCreate']['segment']['id'];
+    }
+
+    private function deleteSegment(string $id, string $shopDomain, string $accessToken): void
+    {
+        try {
+            $response = $this->graphql($shopDomain, $accessToken, self::MUTATION_SEGMENT_DELETE, ['id' => $id]);
+            $this->checkErrors($response, 'segmentDelete');
+            Log::info("Shopify segment deleted: {$id}");
+        } catch (\Throwable $e) {
+            // Segment may have been manually deleted — log and continue
+            Log::warning("Could not delete segment [{$id}]: {$e->getMessage()}");
+        }
     }
 
     // -----------------------------------------------------------------
@@ -394,7 +540,6 @@ class ShopifyDiscountService
             return ['all' => true];
         }
 
-        // return ['variants' => ['variantsToAdd' => $variants]];
         return ['products' => ['productVariantsToAdd' => $variants]];
     }
 
@@ -411,101 +556,6 @@ class ShopifyDiscountService
         }
 
         return null;
-    }
-
-    // -----------------------------------------------------------------
-    // Customer selection
-    // -----------------------------------------------------------------
-
-    /**
-     * @throws \App\Exceptions\NoCustomersMatchedException
-     */
-    private function resolveCustomerSelection(Campaign $campaign, string $shopDomain, string $accessToken): array
-    {
-        $filters = $campaign->customer_filters;
-
-        if (!$this->hasActiveFilters($filters)) {
-            return ['all' => true];
-        }
-
-        $customerIds = $this->fetchMatchingCustomers($filters, $shopDomain, $accessToken);
-
-        if (empty($customerIds)) {
-            Log::warning("Campaign [{$campaign->id}]: no customers matched filters — skipping discount.");
-            throw new \App\Exceptions\NoCustomersMatchedException(
-                "No customers matched the filters for campaign [{$campaign->id}]."
-            );
-        }
-
-        return ['customers' => ['add' => $customerIds]];
-    }
-
-    private function hasActiveFilters(array $filters): bool
-    {
-        if (!empty($filters['total_spent']['from']) || !empty($filters['total_spent']['to'])) {
-            return true;
-        }
-        if (!empty($filters['last_order_date']['from']) || !empty($filters['last_order_date']['to'])) {
-            return true;
-        }
-        if (!empty($filters['tags'])) {
-            return true;
-        }
-
-        $purchased = $filters['purchased_products'] ?? '[]';
-        if (is_string($purchased)) {
-            $purchased = json_decode($purchased, true) ?? [];
-        }
-
-        return !empty($purchased);
-    }
-
-    private function fetchMatchingCustomers(array $filters, string $shopDomain, string $accessToken): array
-    {
-        $queryParts = [];
-
-        if (!empty($filters['total_spent']['from'])) {
-            $queryParts[] = "total_spent:>={$filters['total_spent']['from']}";
-        }
-        if (!empty($filters['total_spent']['to'])) {
-            $queryParts[] = "total_spent:<={$filters['total_spent']['to']}";
-        }
-        if (!empty($filters['last_order_date']['from'])) {
-            $queryParts[] = "last_order_date:>={$filters['last_order_date']['from']}";
-        }
-        if (!empty($filters['last_order_date']['to'])) {
-            $queryParts[] = "last_order_date:<={$filters['last_order_date']['to']}";
-        }
-
-        $tags = $filters['tags'] ?? [];
-        if (is_string($tags) && $tags !== '') {
-            $tags = array_map('trim', explode(',', $tags));
-        }
-        foreach ((array) $tags as $tag) {
-            if ($tag !== '') {
-                $queryParts[] = "tag:{$tag}";
-            }
-        }
-
-        $query       = implode(' AND ', $queryParts);
-        $customerIds = [];
-        $cursor      = null;
-        $hasNextPage = true;
-
-        while ($hasNextPage) {
-            $variables     = array_filter(['query' => $query, 'after' => $cursor]);
-            $result        = $this->graphql($shopDomain, $accessToken, self::QUERY_CUSTOMERS, $variables);
-            $customersData = $result['data']['customers'] ?? [];
-
-            foreach (($customersData['edges'] ?? []) as $edge) {
-                $customerIds[] = $edge['node']['id'];
-            }
-
-            $hasNextPage = $customersData['pageInfo']['hasNextPage'] ?? false;
-            $cursor      = $customersData['pageInfo']['endCursor'] ?? null;
-        }
-
-        return $customerIds;
     }
 
     // -----------------------------------------------------------------
@@ -534,13 +584,18 @@ class ShopifyDiscountService
 
     private function checkErrors(array $response, string $mutationKey): void
     {
+        if (isset($response['errors'])) {
+            $message = is_array($response['errors'])
+                ? json_encode($response['errors'])
+                : $response['errors'];
+            throw new \RuntimeException("Shopify GraphQL error: {$message}");
+        }
+
         $userErrors = $response['data'][$mutationKey]['userErrors'] ?? [];
 
         if (!empty($userErrors)) {
             $messages = collect($userErrors)
-                // ->map(fn($e) => "[{$e['field']}] {$e['message']}")
                 ->map(function ($e) {
-                    // Shopify 'field' is an array, so we join it with dots
                     $fieldPath = is_array($e['field']) ? implode('.', $e['field']) : ($e['field'] ?? 'unknown');
                     return "[$fieldPath] {$e['message']}";
                 })

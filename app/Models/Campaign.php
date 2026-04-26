@@ -14,6 +14,7 @@ class Campaign extends Model
         'campaign_type',
         'discount_code',
         'shopify_discount_id',
+        'shopify_segment_id',
         'schedule_type',
         'monthly_frequency',
         'monthly_validity',

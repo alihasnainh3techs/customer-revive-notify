@@ -54,6 +54,7 @@ $config = $integration->configurations ?? [];
 
                     <s-text-field
                         readOnly
+                        disabled
                         label="Device Name"
                         value=""></s-text-field>
                 </s-grid>

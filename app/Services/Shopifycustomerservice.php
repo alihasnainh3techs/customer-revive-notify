@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 class ShopifyCustomerService
 {
     private const QUERY_CUSTOMERS = <<<'GQL'
-        query GetCustomers($query: String!, $after: String) {
+        query GetCustomers($query: String, $after: String) {
             customers(first: 250, query: $query, after: $after) {
                 pageInfo { hasNextPage endCursor }
                 edges {
@@ -19,11 +19,8 @@ class ShopifyCustomerService
                         lastName
                         email
                         phone
-                        totalSpent: lifetimeDuration
                         amountSpent { amount currencyCode }
-                        lastOrder {
-                            createdAt
-                        }
+                        lastOrder { createdAt }
                         tags
                     }
                 }
@@ -33,9 +30,9 @@ class ShopifyCustomerService
 
     /**
      * Fetch all matching customers for a campaign with full data.
-     * Respects customer_filters and paginates through all results.
-     *
-     * Returns an array of customer data arrays.
+     * Paginates through all results respecting customer_filters.
+     * Tags use OR logic — a customer is included if they have ANY of the tags.
+     * Different filter types use OR logic between each other.
      */
     public function fetchCampaignCustomers(Campaign $campaign): array
     {
@@ -55,22 +52,21 @@ class ShopifyCustomerService
             if ($cursor) {
                 $variables['after'] = $cursor;
             }
-            $result    = $this->graphql($shopDomain, $accessToken, self::QUERY_CUSTOMERS, $variables);
 
+            $result        = $this->graphql($shopDomain, $accessToken, self::QUERY_CUSTOMERS, $variables);
             $customersData = $result['data']['customers'] ?? [];
 
             foreach (($customersData['edges'] ?? []) as $edge) {
-                $node = $edge['node'];
-
+                $node        = $edge['node'];
                 $customers[] = [
-                    'id'              => $node['id'],
-                    'firstName'       => $node['firstName'] ?? '',
-                    'lastName'        => $node['lastName'] ?? '',
-                    'email'           => $node['email'] ?? '',
-                    'phone'           => $node['phone'] ?? '',
-                    'totalSpent'      => $node['amountSpent']['amount'] ?? '0.00',
-                    'lastOrder'       => $node['lastOrder'] ?? null,
-                    'tags'            => $node['tags'] ?? [],
+                    'id'         => $node['id'],
+                    'firstName'  => $node['firstName'] ?? '',
+                    'lastName'   => $node['lastName'] ?? '',
+                    'email'      => $node['email'] ?? '',
+                    'phone'      => $node['phone'] ?? '',
+                    'totalSpent' => $node['amountSpent']['amount'] ?? '0.00',
+                    'lastOrder'  => $node['lastOrder'] ?? null,
+                    'tags'       => $node['tags'] ?? [],
                 ];
             }
 
@@ -78,7 +74,7 @@ class ShopifyCustomerService
             $cursor      = $customersData['pageInfo']['endCursor'] ?? null;
         }
 
-        Log::info("Campaign [{$campaign->id}]: fetched {$this->count($customers)} customer(s) from Shopify.");
+        Log::info("Campaign [{$campaign->id}]: fetched " . count($customers) . " customer(s) from Shopify.");
 
         return $customers;
     }
@@ -87,40 +83,56 @@ class ShopifyCustomerService
     // Query builder
     // -----------------------------------------------------------------
 
+    /**
+     * Build a Shopify customer search query from filter criteria.
+     *
+     * Rules:
+     * - amount_spent range: AND between from/to bounds
+     * - last_order_date range: AND between from/to bounds
+     * - customer tags: OR between multiple tags (customer has ANY of the tags)
+     * - Different filter groups: OR between each other
+     */
     private function buildSearchQuery(array $filters): string
     {
-        $queryParts = [];
+        $parts = [];
 
-        if (!empty($filters['total_spent']['from'])) {
-            $queryParts[] = "total_spent:>={$filters['total_spent']['from']}";
-        }
-        if (!empty($filters['total_spent']['to'])) {
-            $queryParts[] = "total_spent:<={$filters['total_spent']['to']}";
-        }
-        if (!empty($filters['last_order_date']['from'])) {
-            $queryParts[] = "last_order_date:>={$filters['last_order_date']['from']}";
-        }
-        if (!empty($filters['last_order_date']['to'])) {
-            $queryParts[] = "last_order_date:<={$filters['last_order_date']['to']}";
+        // amount_spent group — AND between bounds, wrapped in parens if both set
+        $spentFrom = $filters['total_spent']['from'] ?? null;
+        $spentTo   = $filters['total_spent']['to'] ?? null;
+        if ($spentFrom !== null && $spentTo !== null) {
+            $parts[] = "(total_spent:>={$spentFrom} AND total_spent:<={$spentTo})";
+        } elseif ($spentFrom !== null) {
+            $parts[] = "total_spent:>={$spentFrom}";
+        } elseif ($spentTo !== null) {
+            $parts[] = "total_spent:<={$spentTo}";
         }
 
+        // last_order_date group — AND between bounds
+        $dateFrom = $filters['last_order_date']['from'] ?? null;
+        $dateTo   = $filters['last_order_date']['to'] ?? null;
+        if ($dateFrom !== null && $dateTo !== null) {
+            $parts[] = "(last_order_date:>={$dateFrom} AND last_order_date:<={$dateTo})";
+        } elseif ($dateFrom !== null) {
+            $parts[] = "last_order_date:>={$dateFrom}";
+        } elseif ($dateTo !== null) {
+            $parts[] = "last_order_date:<={$dateTo}";
+        }
+
+        // Customer tags — OR between multiple tags
         $tags = $filters['tags'] ?? [];
         if (is_string($tags) && $tags !== '') {
             $tags = array_map('trim', explode(',', $tags));
         }
-        foreach ((array) $tags as $tag) {
-            if ($tag !== '') {
-                $queryParts[] = "tag:{$tag}";
-            }
+        $tags = array_values(array_filter((array) $tags));
+        if (!empty($tags)) {
+            $tagClauses = array_map(fn($tag) => "tag:{$tag}", $tags);
+            $parts[]    = count($tagClauses) > 1
+                ? '(' . implode(' OR ', $tagClauses) . ')'
+                : $tagClauses[0];
         }
 
-        // Empty query = fetch all customers
-        return implode(' AND ', $queryParts);
-    }
-
-    private function count(array $customers): int
-    {
-        return count($customers);
+        // All filter groups joined with OR
+        return implode(' OR ', $parts);
     }
 
     // -----------------------------------------------------------------
