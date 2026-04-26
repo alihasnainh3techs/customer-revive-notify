@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BrandedSMSController;
+use App\Http\Controllers\TexnityController;
+use App\Http\Controllers\WhatomationController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TemplateController;
@@ -24,6 +26,10 @@ Route::middleware(['verify.shopify'])->group(function () {
     Route::prefix('settings')->name('settings.')->group(function () {
 
         Route::resource('bsp', BrandedSMSController::class);
+
+        Route::resource('whatomation', WhatomationController::class);
+
+        Route::resource('texnity', TexnityController::class);
 
         Route::resource('smtp', SmtpConfigurationController::class)
             ->parameters(['smtp' => 'smtpConfiguration']);
