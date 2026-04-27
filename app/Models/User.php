@@ -35,4 +35,9 @@ class User extends Authenticatable implements IShopModel
     {
         return $this->hasOne(SmtpConfiguration::class);
     }
+
+    public function integrations()
+    {
+        return $this->hasMany(Integration::class);
+    }
 }

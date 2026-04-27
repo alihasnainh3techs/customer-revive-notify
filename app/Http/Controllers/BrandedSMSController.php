@@ -40,7 +40,6 @@ class BrandedSMSController extends Controller
             'email'     => 'required|email',
             'password'  => 'required|string',
             'mask_id'   => 'required|string',
-            'device_id' => 'required|string',
         ]);
 
         try {
@@ -55,7 +54,6 @@ class BrandedSMSController extends Controller
                         'email'     => $validated['email'],
                         'password'  => $validated['password'],
                         'mask_id'   => $validated['mask_id'],
-                        'device_id' => $validated['device_id'],
                     ],
                 ]
             );

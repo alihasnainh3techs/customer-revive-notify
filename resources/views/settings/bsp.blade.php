@@ -76,14 +76,6 @@ $config = $integration->configurations ?? [];
                         error="{{ $errors->first('mask_id') }}"
                         required>
                     </s-text-field>
-
-                    <s-text-field
-                        name="device_id"
-                        label="Device ID"
-                        value="{{ old('device_id', $config['device_id'] ?? '') }}"
-                        error="{{ $errors->first('device_id') }}"
-                        required>
-                    </s-text-field>
                 </s-grid>
             </s-stack>
         </s-section>

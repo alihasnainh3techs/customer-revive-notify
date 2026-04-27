@@ -193,8 +193,21 @@
                     </s-grid>
                 </s-clickable>
 
+                @php
+                $installed = in_array('whatomation', $data['apps'] ?? []);
+
+                $bspUrl = $installed
+                ? route('settings.whatomation.index', [
+                'host' => request()->input('host'),
+                'shop' => Auth::user()->name
+                ])
+                : 'https://apps.shopify.com/whatomation';
+                @endphp
                 <s-clickable
-                    href="https://apps.shopify.com/planet"
+                    href="{{ $bspUrl }}"
+                    @if($installed)
+                    target="_self"
+                    @endif
                     border="base"
                     borderRadius="base"
                     padding="base"
@@ -214,17 +227,32 @@
                             </s-paragraph>
                         </s-box>
                         <s-stack justifyContent="start">
-                            @php $installed = in_array('whatomation', $data['apps'] ?? []); @endphp
                             <s-button
-                                href="https://apps.shopify.com/planet"
+                                href="{{ $bspUrl }}"
+                                @if($installed)
+                                target="_self"
+                                @endif
                                 icon="{{ $installed ? 'settings' : 'download' }}"
                                 accessibilityLabel="Configure Whatomation whatsapp notifications"></s-button>
                         </s-stack>
                     </s-grid>
                 </s-clickable>
 
+                @php
+                $installed = in_array('texnity', $data['apps'] ?? []);
+
+                $bspUrl = $installed
+                ? route('settings.texnity.index', [
+                'host' => request()->input('host'),
+                'shop' => Auth::user()->name
+                ])
+                : 'https://apps.shopify.com/texnity';
+                @endphp
                 <s-clickable
-                    href="https://apps.shopify.com/planet"
+                    href="{{ $bspUrl }}"
+                    @if($installed)
+                    target="_self"
+                    @endif
                     border="base"
                     borderRadius="base"
                     padding="base"
@@ -241,9 +269,11 @@
                             </s-paragraph>
                         </s-box>
                         <s-stack justifyContent="start">
-                            @php $installed = in_array('texnity', $data['apps'] ?? []); @endphp
                             <s-button
-                                href="https://apps.shopify.com/planet"
+                                href="{{ $bspUrl }}"
+                                @if($installed)
+                                target="_self"
+                                @endif
                                 icon="{{ $installed ? 'settings' : 'download' }}"
                                 accessibilityLabel="Configure Texnity notifications"></s-button>
                         </s-stack>

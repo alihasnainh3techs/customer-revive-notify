@@ -14,7 +14,7 @@ $config = $integration->configurations ?? [];
     @csrf
     @if($integration) @method('PATCH') @endif
 
-    <s-page heading="Configure Texnity">
+    <s-page heading="Configure Whatomation">
         <s-link slot="breadcrumb-actions" target="_self" href="{{route('settings', [
             'host' => request('host'),
             'shop' => Auth::user()->name
@@ -56,7 +56,8 @@ $config = $integration->configurations ?? [];
                         readOnly
                         disabled
                         label="Device Name"
-                        value=""></s-text-field>
+                        value="{{ $deviceName }}">
+                    </s-text-field>
                 </s-grid>
             </s-stack>
         </s-section>

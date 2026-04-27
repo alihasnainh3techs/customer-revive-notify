@@ -228,6 +228,7 @@
 
         <s-section heading="Template Selection" padding="base">
             <s-stack gap="base">
+                <input type="hidden" name="message_template_source" id="message_template_source" value="">
                 <s-select
                     id="message-template-select"
                     name="message_template"
@@ -236,15 +237,29 @@
                     required>
                     <s-option value="">Select</s-option>
 
-                    @foreach($messageTemplates as $template)
-                    <s-option
-                        value="{{ $template->id }}"
-                        {{ $campaign->message_template_id == $template->id ? 'selected' : '' }}>
-                        {{ $template->name }}
-                    </s-option>
-                    @endforeach
+                    <s-option-group label="Customer Revive Notify" data-group="app">
+                        @foreach($messageTemplates as $template)
+                        <s-option value="{{ $template->id }}"
+                            {{ $campaign->message_template_id == $template->id ? 'selected' : '' }}>
+                            {{ $template->name }}
+                        </s-option>
+                        @endforeach
+                    </s-option-group>
+
+                    <s-option-group label="Texnity" data-group="texnity">
+                        @foreach($texnityTemplates as $name)
+                        @php
+                        $localMatch = $existingTexnity->where('name', $name)->where('type', 'message')->first();
+                        $isSelected = ($localMatch && $campaign->message_template_id == $localMatch->id);
+                        @endphp
+                        <s-option value="{{ $name }}" {{ $isSelected ? 'selected' : '' }}>
+                            {{ $name }}
+                        </s-option>
+                        @endforeach
+                    </s-option-group>
                 </s-select>
 
+                <input type="hidden" name="email_template_source" id="email_template_source" value="">
                 <s-select
                     id="email-template-select"
                     name="email_template"
@@ -253,13 +268,26 @@
                     required>
                     <s-option value="">Select</s-option>
 
-                    @foreach($emailTemplates as $template)
-                    <s-option
-                        value="{{ $template->id }}"
-                        {{ $campaign->email_template_id == $template->id ? 'selected' : '' }}>
-                        {{ $template->name }}
-                    </s-option>
-                    @endforeach
+                    <s-option-group label="Customer Revive Notify" data-group="app">
+                        @foreach($emailTemplates as $template)
+                        <s-option value="{{ $template->id }}"
+                            {{ $campaign->email_template_id == $template->id ? 'selected' : '' }}>
+                            {{ $template->name }}
+                        </s-option>
+                        @endforeach
+                    </s-option-group>
+
+                    <s-option-group label="Texnity" data-group="texnity">
+                        @foreach($texnityTemplates as $name)
+                        @php
+                        $localMatch = $existingTexnity->where('name', $name)->where('type', 'email')->first();
+                        $isSelected = ($localMatch && $campaign->email_template_id == $localMatch->id);
+                        @endphp
+                        <s-option value="{{ $name }}" {{ $isSelected ? 'selected' : '' }}>
+                            {{ $name }}
+                        </s-option>
+                        @endforeach
+                    </s-option-group>
                 </s-select>
             </s-stack>
         </s-section>

@@ -8,6 +8,7 @@ use App\Services\ShopifyDiscountService;
 use App\Services\ShopifyCustomerService;
 use App\Jobs\SendWhatsAppMessageJob;
 use App\Jobs\SendEmailJob;
+use App\Jobs\SendIntegrationCampaignJob;
 use Illuminate\Support\Facades\Log;
 
 class ScheduleCampaigns extends Command
@@ -45,7 +46,7 @@ class ScheduleCampaigns extends Command
         // ---------------------------------------------------------------
         // Build the base query — custom campaigns starting today
         // ---------------------------------------------------------------
-        $query = Campaign::with(['user.device', 'user.smtpConfiguration'])
+        $query = Campaign::with(['user.device', 'user.smtpConfiguration', 'user.integrations'])
             ->where('campaign_status', 'active')
             ->where(function ($q) use ($today, $currentDay, $currentMonth) {
 
@@ -77,7 +78,7 @@ class ScheduleCampaigns extends Command
         Log::info("ScheduleCampaigns: {$campaigns->count()} campaign(s) matched.");
 
         foreach ($campaigns as $campaign) {
-            $logContext = $campaign->load('user.device', 'user.smtpConfiguration')->toArray();
+            $logContext = $campaign->load('user.device', 'user.smtpConfiguration', 'user.integrations')->toArray();
             Log::info('Campaign matched', $logContext);
 
             try {
@@ -135,8 +136,10 @@ class ScheduleCampaigns extends Command
         $shouldSendWhatsApp = $device && $device->enable_whatsapp;
         $shouldSendEmail    = $smtpConfiguration && $smtpConfiguration->status;
 
+        $activeIntegrations = $campaign->user->integrations->where('status', true);
+
         // Nothing to send — skip customer fetch entirely
-        if (!$shouldSendWhatsApp && !$shouldSendEmail) {
+        if (!$shouldSendWhatsApp && !$shouldSendEmail && $activeIntegrations->isEmpty()) {
             Log::info("Campaign [{$campaign->id}] — no notification channels active, skipping.");
             return;
         }
@@ -151,6 +154,7 @@ class ScheduleCampaigns extends Command
 
         $emailCount    = 0;
         $whatsappCount = 0;
+        $integrationCount = 0;
 
         foreach ($customers as $customer) {
             if ($shouldSendEmail) {
@@ -162,11 +166,21 @@ class ScheduleCampaigns extends Command
                 SendWhatsAppMessageJob::dispatch($campaign, $customer);
                 $whatsappCount++;
             }
+
+            foreach ($activeIntegrations as $integration) {
+                SendIntegrationCampaignJob::dispatch(
+                    $campaign,
+                    $customer,
+                    $integration
+                );
+                $integrationCount++;
+            }
         }
 
         Log::info("Campaign [{$campaign->id}] — jobs dispatched.", [
             'email_jobs'    => $emailCount,
             'whatsapp_jobs' => $whatsappCount,
+            'integration_jobs' => $integrationCount,
         ]);
     }
 

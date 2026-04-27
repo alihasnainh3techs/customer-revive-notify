@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('customer_phone')->nullable();
             $table->string('customer_name')->nullable();
 
-            $table->enum('channel', ['email', 'whatsapp']);
+            $table->string('channel');
             $table->enum('status', ['sent', 'failed']);
             $table->text('failure_reason')->nullable(); // only populated when status = failed
 

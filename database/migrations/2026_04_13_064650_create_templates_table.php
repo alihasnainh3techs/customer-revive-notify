@@ -14,10 +14,12 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
 
+            $table->string('source')->nullable();
+
             $table->string('name');
-            $table->enum('type', ['email', 'message']);
+            $table->enum('type', ['email', 'message'])->nullable();
             $table->string('subject')->nullable();
-            $table->text('body');
+            $table->text('body')->nullable();
             $table->boolean('status')->default(true);
             $table->timestamps();
 

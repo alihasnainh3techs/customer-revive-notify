@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('page_content')
+
 <form data-save-bar onsubmit="handleSubmit(event)" onreset="handleReset()">
     <s-page heading="Create campaign">
         <s-link slot="breadcrumb-actions" target="_self" href="{{route('campaigns.index',[
@@ -208,6 +209,8 @@
 
         <s-section heading="Template Selection" padding="base">
             <s-stack gap="base">
+
+                <input type="hidden" name="message_template_source" id="message_template_source" value="">
                 <s-select
                     id="message-template-select"
                     name="message_template"
@@ -217,13 +220,24 @@
 
                     <s-option value="" selected>Select</s-option>
 
-                    @foreach($messageTemplates as $template)
-                    <s-option value="{{ $template->id }}">
-                        {{ $template->name }}
-                    </s-option>
-                    @endforeach
+                    <s-option-group label="Customer Revive Notify" data-group="app">
+                        @foreach($messageTemplates as $template)
+                        <s-option value="{{ $template->id }}">
+                            {{ $template->name }}
+                        </s-option>
+                        @endforeach
+                    </s-option-group>
+
+                    <s-option-group label="Texnity" data-group="texnity">
+                        @foreach($texnityTemplates as $template)
+                        <s-option value="{{ $template }}">
+                            {{ $template }}
+                        </s-option>
+                        @endforeach
+                    </s-option-group>
                 </s-select>
 
+                <input type="hidden" name="email_template_source" id="email_template_source" value="">
                 <s-select
                     id="email-template-select"
                     name="email_template"
@@ -233,11 +247,21 @@
 
                     <s-option value="" selected>Select</s-option>
 
-                    @foreach($emailTemplates as $template)
-                    <s-option value="{{ $template->id }}">
-                        {{ $template->name }}
-                    </s-option>
-                    @endforeach
+                    <s-option-group label="Customer Revive Notify" data-group="app">
+                        @foreach($emailTemplates as $template)
+                        <s-option value="{{ $template->id }}">
+                            {{ $template->name }}
+                        </s-option>
+                        @endforeach
+                    </s-option-group>
+
+                    <s-option-group label="Texnity" data-group="texnity">
+                        @foreach($texnityTemplates as $template)
+                        <s-option value="{{ $template }}">
+                            {{ $template }}
+                        </s-option>
+                        @endforeach
+                    </s-option-group>
                 </s-select>
             </s-stack>
         </s-section>

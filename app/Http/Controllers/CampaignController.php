@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Template;
 use App\Models\Campaign;
+use App\Services\IntegrationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -12,6 +13,13 @@ use Illuminate\Validation\Rule;
 
 class CampaignController extends Controller
 {
+    protected $integrationService;
+
+    public function __construct(IntegrationService $integrationService)
+    {
+        $this->integrationService = $integrationService;
+    }
+
     public function index(Request $request)
     {
         $query = Campaign::where('user_id', Auth::id());
@@ -51,6 +59,7 @@ class CampaignController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
+
         $emailTemplates = Template::where('user_id', $user->id)
             ->where('type', 'email')
             ->where('status', true)
@@ -61,9 +70,24 @@ class CampaignController extends Controller
             ->where('status', true)
             ->get();
 
+        $integration = $user->integrations()
+            ->where('provider', 'texnity')
+            ->first();
+
+        $response = $this->integrationService->validateAndFetchTemplates(
+            $user->name,
+            $integration->configurations['password']
+        );
+
+        $templates = [];
+        if (isset($response['templates'])) {
+            $templates = collect($response['templates'])->pluck('template_name')->toArray();
+        }
+
         return view('create-campaign', [
             'emailTemplates'   => $emailTemplates,
             'messageTemplates' => $messageTemplates,
+            'texnityTemplates' => $templates,
         ]);
     }
 
@@ -81,17 +105,33 @@ class CampaignController extends Controller
     public function edit($id)
     {
         $campaign = Campaign::where('user_id', Auth::id())->findOrFail($id);
+
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        $emailTemplates = Template::where('user_id', $user->id)
-            ->where('type', 'email')
+        $allTemplates = Template::where('user_id', $user->id)
             ->where('status', true)
             ->get();
 
-        $messageTemplates = Template::where('user_id', $user->id)
-            ->where('type', 'message')
-            ->where('status', true)
-            ->get();
+        $emailTemplates = $allTemplates->where('type', 'email')->whereNull('source');
+
+        $messageTemplates = $allTemplates->where('type', 'message')->whereNull('source');
+
+        $existingTexnityTemplates = $allTemplates->where('source', 'texnity');
+
+        $integration = $user->integrations()
+            ->where('provider', 'texnity')
+            ->first();
+
+        $response = $this->integrationService->validateAndFetchTemplates(
+            $user->name,
+            $integration->configurations['password']
+        );
+
+        $templates = [];
+        if (isset($response['templates'])) {
+            $templates = collect($response['templates'])->pluck('template_name')->toArray();
+        }
 
         $selectedIds = json_decode($campaign->selected_products, true) ?: [];
         $productsData = [];
@@ -192,6 +232,8 @@ class CampaignController extends Controller
             'campaign'         => $campaign,
             'emailTemplates'   => $emailTemplates,
             'messageTemplates' => $messageTemplates,
+            'texnityTemplates'  => $templates,
+            'existingTexnity'   => $existingTexnityTemplates,
             'productsData'     => $productsData,
             'purchasedProductsData' => $purchasedProductsData,
         ]);
@@ -446,6 +488,38 @@ class CampaignController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
+        // Message Template
+        $messageTemplateId = $request->input('message_template');
+        if ($request->input('message_template_source') !== 'app') {
+            $messageTemplate = \App\Models\Template::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'name'    => $messageTemplateId
+                ],
+                [
+                    'source' => $request->input('message_template_source'),
+                    'type'   => 'message'
+                ]
+            );
+            $messageTemplateId = $messageTemplate->id;
+        }
+
+        // Email Template
+        $emailTemplateId = $request->input('email_template');
+        if ($request->input('email_template_source') !== 'app') {
+            $emailTemplate = \App\Models\Template::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'name'    => $emailTemplateId
+                ],
+                [
+                    'source' => $request->input('email_template_source'),
+                    'type'   => 'email'
+                ]
+            );
+            $emailTemplateId = $emailTemplate->id;
+        }
+
         Campaign::create([
             'user_id'             => $user->id,
             'campaign_name'       => $request->input('campaign_name'),
@@ -461,8 +535,8 @@ class CampaignController extends Controller
             'discount_type'       => $request->input('discount_type'),
             'discount_rules'      => $discountRules,
             'customer_filters'    => $customerFilters,
-            'message_template_id' => $request->input('message_template'),
-            'email_template_id'   => $request->input('email_template'),
+            'message_template_id' => $messageTemplateId,
+            'email_template_id'   => $emailTemplateId,
         ]);
 
         return response()->json([

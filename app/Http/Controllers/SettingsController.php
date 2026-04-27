@@ -21,6 +21,7 @@ class SettingsController extends Controller
         $user = Auth::user();
 
         $templates = Template::where('user_id', $user->id)
+            ->whereNull('source')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
