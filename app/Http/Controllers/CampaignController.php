@@ -305,6 +305,41 @@ class CampaignController extends Controller
 
         $validator->validate();
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Message Template
+        $messageTemplateId = $request->input('message_template');
+        if ($request->input('message_template_source') !== 'app') {
+            $messageTemplate = Template::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'name'    => $messageTemplateId
+                ],
+                [
+                    'source' => $request->input('message_template_source'),
+                    'type'   => 'message'
+                ]
+            );
+            $messageTemplateId = $messageTemplate->id;
+        }
+
+        // Email Template
+        $emailTemplateId = $request->input('email_template');
+        if ($request->input('email_template_source') !== 'app') {
+            $emailTemplate = Template::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'name'    => $emailTemplateId
+                ],
+                [
+                    'source' => $request->input('email_template_source'),
+                    'type'   => 'email'
+                ]
+            );
+            $emailTemplateId = $emailTemplate->id;
+        }
+
         // ── Build JSON Columns ─────────────────────────────────────────────────
         $discountRules = $isDiscount ? [
             'percentage' => [
@@ -364,8 +399,8 @@ class CampaignController extends Controller
             'selected_products'   => $request->input('selected_products'),
             'discount_rules'      => $discountRules,
             'customer_filters'    => $customerFilters,
-            'message_template_id' => $request->input('message_template'),
-            'email_template_id'   => $request->input('email_template'),
+            'message_template_id' => $messageTemplateId,
+            'email_template_id'   => $emailTemplateId,
         ]);
 
         return response()->json([
@@ -491,7 +526,7 @@ class CampaignController extends Controller
         // Message Template
         $messageTemplateId = $request->input('message_template');
         if ($request->input('message_template_source') !== 'app') {
-            $messageTemplate = \App\Models\Template::updateOrCreate(
+            $messageTemplate = Template::updateOrCreate(
                 [
                     'user_id' => $user->id,
                     'name'    => $messageTemplateId
@@ -507,7 +542,7 @@ class CampaignController extends Controller
         // Email Template
         $emailTemplateId = $request->input('email_template');
         if ($request->input('email_template_source') !== 'app') {
-            $emailTemplate = \App\Models\Template::updateOrCreate(
+            $emailTemplate = Template::updateOrCreate(
                 [
                     'user_id' => $user->id,
                     'name'    => $emailTemplateId
