@@ -308,6 +308,10 @@ class CampaignController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
+        // Track old template IDs before update
+        $oldMessageTemplateId = $campaign->message_template_id;
+        $oldEmailTemplateId = $campaign->email_template_id;
+
         // Message Template
         $messageTemplateId = $request->input('message_template');
         if ($request->input('message_template_source') !== 'app') {
@@ -402,6 +406,25 @@ class CampaignController extends Controller
             'message_template_id' => $messageTemplateId,
             'email_template_id'   => $emailTemplateId,
         ]);
+
+        // Clean up orphans - delete old templates if no longer referenced
+        if ($oldMessageTemplateId && $oldMessageTemplateId !== $messageTemplateId) {
+            $oldTemplate = Template::find($oldMessageTemplateId);
+            if ($oldTemplate && !Campaign::where('message_template_id', $oldMessageTemplateId)
+                ->where('id', '!=', $campaign->id)
+                ->exists()) {
+                $oldTemplate->delete();
+            }
+        }
+
+        if ($oldEmailTemplateId && $oldEmailTemplateId !== $emailTemplateId) {
+            $oldTemplate = Template::find($oldEmailTemplateId);
+            if ($oldTemplate && !Campaign::where('email_template_id', $oldEmailTemplateId)
+                ->where('id', '!=', $campaign->id)
+                ->exists()) {
+                $oldTemplate->delete();
+            }
+        }
 
         return response()->json([
             'message'  => 'Campaign updated successfully.',
