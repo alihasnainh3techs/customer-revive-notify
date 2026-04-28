@@ -61,10 +61,58 @@ class SendIntegrationCampaignJob implements ShouldQueue
         // 2. Re-check integration is still active
         if (!$integration->status) {
             $reason = 'Whatomation integration is disabled';
-            $this->logToDb($campaign, $customer, 'failed', $reason);
+            $this->logToDb($campaign, $customer, 'whatomation', 'failed', $reason);
             $this->fail($reason);
             return;
         }
+
+        $template = DB::table('templates')->where('id', $campaign->message_template_id)->first();
+        if (!$template) {
+            $reason = "Message template [{$campaign->message_template_id}] not found";
+            $this->logToDb($campaign, $customer, 'whatomation', 'failed', $reason);
+            $this->fail($reason);
+            return;
+        }
+        if (!$template->status) {
+            $reason = "Message template [{$template->id}] is inactive";
+            $this->logToDb($campaign, $customer, 'whatomation', 'failed', $reason);
+            $this->fail($reason);
+            return;
+        }
+
+        // 5. Build final message body
+        $shopData  = $this->getShopData($campaign->user);
+        $mapping   = $variableService->getMapping($campaign, $customer, $shopData);
+        $finalBody = $variableService->replace($template->body, $mapping);
+
+        // 6. Send Whatsapp message via Whatomation
+        try {
+            $result = $integrationService->sendWhatomationMessage(
+                storeName: $campaign->user->name,
+                customerId: $customer['id'],
+                to: $customer['phone'],
+                content: $finalBody,
+            );
+        } catch (\Throwable $e) {
+            $reason = 'Whatomation API connection error: ' . $e->getMessage();
+            Log::error("SendIntegrationCampaignJob [Whatomation] failed for [{$customer['phone']}]: {$reason}");
+            $this->logToDb($campaign, $customer, 'whatomation', 'failed', $reason);
+            $this->fail($e);
+            return;
+        }
+
+        // 7. Check response — success only when status === true
+        if (empty($result['status'])) {
+            $reason = $result['message'] ?? 'Whatomation returned an unknown error';
+            Log::error("SendIntegrationCampaignJob [Whatomation] failed for [{$customer['phone']}]: {$reason}");
+            $this->logToDb($campaign, $customer, 'whatomation', 'failed', $reason);
+            $this->fail($reason);
+            return;
+        }
+
+        // 8. Log success
+        $this->logToDb($campaign, $customer, 'whatomation', 'sent');
+        Log::info("SendIntegrationCampaignJob [Whatomation]: Message sent to [{$customer['phone']}] for campaign [{$campaign->id}].");
     }
 
     // -----------------------------------------------------------------
@@ -76,24 +124,7 @@ class SendIntegrationCampaignJob implements ShouldQueue
         Integration          $integration,
         TemplateVariableService $variableService,
         IntegrationService   $integrationService
-    ): void {
-        // 1. Skip silently if customer has no phone
-        if (empty($customer['phone'])) {
-            Log::info("SendIntegrationCampaignJob [Texnity] skipped: customer [{$customer['id']}] has no phone number.");
-            return;
-        }
-
-        // 2. Re-check integration is still active
-        if (!$integration->status) {
-            $reason = 'Whatomation integration is disabled';
-            $this->logToDb($campaign, $customer, 'failed', $reason);
-            $this->fail($reason);
-            return;
-        }
-
-        // 3. Extract BSP credentials from configurations
-        $config  = $integration->configurations;
-    }
+    ): void {}
 
     // -----------------------------------------------------------------
     // BSP — SMS
@@ -115,7 +146,7 @@ class SendIntegrationCampaignJob implements ShouldQueue
         // 2. Re-check integration is still active
         if (!$integration->status) {
             $reason = 'BSP integration is disabled';
-            $this->logToDb($campaign, $customer, 'failed', $reason);
+            $this->logToDb($campaign, $customer, 'sms', 'failed', $reason);
             $this->fail($reason);
             return;
         }
@@ -129,13 +160,13 @@ class SendIntegrationCampaignJob implements ShouldQueue
         $template = DB::table('templates')->where('id', $campaign->message_template_id)->first();
         if (!$template) {
             $reason = "Message template [{$campaign->message_template_id}] not found";
-            $this->logToDb($campaign, $customer, 'failed', $reason);
+            $this->logToDb($campaign, $customer, 'sms', 'failed', $reason);
             $this->fail($reason);
             return;
         }
         if (!$template->status) {
             $reason = "Message template [{$template->id}] is inactive";
-            $this->logToDb($campaign, $customer, 'failed', $reason);
+            $this->logToDb($campaign, $customer, 'sms', 'failed', $reason);
             $this->fail($reason);
             return;
         }
@@ -157,7 +188,7 @@ class SendIntegrationCampaignJob implements ShouldQueue
         } catch (\Throwable $e) {
             $reason = 'BSP API connection error: ' . $e->getMessage();
             Log::error("SendIntegrationCampaignJob [BSP] failed for [{$customer['phone']}]: {$reason}");
-            $this->logToDb($campaign, $customer, 'failed', $reason);
+            $this->logToDb($campaign, $customer, 'sms', 'failed', $reason);
             $this->fail($e);
             return;
         }
@@ -169,13 +200,13 @@ class SendIntegrationCampaignJob implements ShouldQueue
             $reason = $result['sms']['response']
                 ?? ($result['message'] ?? 'BSP returned an unknown error');
             Log::error("SendIntegrationCampaignJob [BSP] failed for [{$customer['phone']}]: {$reason}");
-            $this->logToDb($campaign, $customer, 'failed', $reason);
+            $this->logToDb($campaign, $customer, 'sms', 'failed', $reason);
             $this->fail($reason);
             return;
         }
 
         // 8. Log success
-        $this->logToDb($campaign, $customer, 'sent');
+        $this->logToDb($campaign, $customer, 'sms', 'sent');
         Log::info("SendIntegrationCampaignJob [BSP]: SMS sent to [{$customer['phone']}] for campaign [{$campaign->id}].");
     }
 
@@ -186,6 +217,7 @@ class SendIntegrationCampaignJob implements ShouldQueue
     private function logToDb(
         Campaign $campaign,
         array    $customer,
+        string   $channel,
         string   $status,
         ?string  $failureReason = null
     ): void {
@@ -195,7 +227,7 @@ class SendIntegrationCampaignJob implements ShouldQueue
             'customer_id'    => $customer['id'],
             'customer_phone' => $customer['phone'],
             'customer_name'  => trim(($customer['firstName'] ?? '') . ' ' . ($customer['lastName'] ?? '')),
-            'channel'        => 'sms',
+            'channel'        => $channel,
             'status'         => $status,
             'failure_reason' => $failureReason,
             'sent_at'        => $status === 'sent' ? now() : null,

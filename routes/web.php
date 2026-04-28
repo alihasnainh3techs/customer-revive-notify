@@ -11,6 +11,8 @@ use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\ExploreController;
 use App\Http\Controllers\SmtpConfigurationController;
 use App\Http\Controllers\DeviceController;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 Route::middleware(['verify.shopify'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('home');

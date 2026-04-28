@@ -259,7 +259,6 @@
                     </s-option-group>
                 </s-select>
 
-                <input type="hidden" name="email_template_source" id="email_template_source" value="">
                 <s-select
                     id="email-template-select"
                     name="email_template"
@@ -267,27 +266,12 @@
                     value="{{ $campaign->email_template_id }}"
                     required>
                     <s-option value="">Select</s-option>
-
-                    <s-option-group label="Customer Revive Notify" data-group="app">
-                        @foreach($emailTemplates as $template)
-                        <s-option value="{{ $template->id }}"
-                            {{ $campaign->email_template_id == $template->id ? 'selected' : '' }}>
-                            {{ $template->name }}
-                        </s-option>
-                        @endforeach
-                    </s-option-group>
-
-                    <s-option-group label="Texnity" data-group="texnity">
-                        @foreach($texnityTemplates as $name)
-                        @php
-                        $localMatch = $existingTexnity->where('name', $name)->where('type', 'email')->first();
-                        $isSelected = ($localMatch && $campaign->email_template_id == $localMatch->id);
-                        @endphp
-                        <s-option value="{{ $name }}" {{ $isSelected ? 'selected' : '' }}>
-                            {{ $name }}
-                        </s-option>
-                        @endforeach
-                    </s-option-group>
+                    @foreach($emailTemplates as $template)
+                    <s-option value="{{ $template->id }}"
+                        {{ $campaign->email_template_id == $template->id ? 'selected' : '' }}>
+                        {{ $template->name }}
+                    </s-option>
+                    @endforeach
                 </s-select>
             </s-stack>
         </s-section>

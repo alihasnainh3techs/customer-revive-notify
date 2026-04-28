@@ -816,26 +816,3 @@ document.getElementById('message-template-select').addEventListener('change', fu
         hiddenInput.value = group.dataset.group;   // "texnity" or "app"
     }
 });
-
-document.getElementById('email-template-select').addEventListener('change', function (e) {
-    const select = e.target;                     // <s-select> element
-    const value = select.value;                  // selected option’s value
-    const hiddenInput = document.getElementById('email_template_source');
-
-    // Reset when the placeholder is selected (empty value)
-    if (!value) {
-        hiddenInput.value = '';
-        return;
-    }
-
-    // Find the selected <s-option> inside the select's light DOM
-    // (Shoelace options are slotted, so querySelector works on the host)
-    const option = select.querySelector(`s-option[value="${CSS.escape(value)}"]`);
-    if (!option) return;
-
-    // Walk up to the <s-option-group> and read its data-group
-    const group = option.closest('s-option-group');
-    if (group) {
-        hiddenInput.value = group.dataset.group;   // "texnity" or "app"
-    }
-});

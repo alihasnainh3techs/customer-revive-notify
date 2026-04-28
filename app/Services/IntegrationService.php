@@ -110,6 +110,9 @@ class IntegrationService
 
     public function sendTexnityMessage(string $storeName, string $customerId, string $to, string $content,  string $apiKey)
     {
+        $to = ltrim($to, '+');
+        $customerId = preg_replace('/\D/', '', $customerId);
+
         $payload = [
             'shop_name' => $storeName,
             'event' => 'notification',
@@ -151,6 +154,10 @@ class IntegrationService
 
     public function sendWhatomationMessage(string $storeName, string $customerId, string $to, string $content)
     {
+
+        $to = ltrim($to, '+');
+        $customerId = preg_replace('/\D/', '', $customerId);
+
         $payload = [
             'shop_name' => $storeName,
             'event' => 'notification',

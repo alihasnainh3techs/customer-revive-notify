@@ -237,7 +237,6 @@
                     </s-option-group>
                 </s-select>
 
-                <input type="hidden" name="email_template_source" id="email_template_source" value="">
                 <s-select
                     id="email-template-select"
                     name="email_template"
@@ -246,22 +245,11 @@
                     required>
 
                     <s-option value="" selected>Select</s-option>
-
-                    <s-option-group label="Customer Revive Notify" data-group="app">
-                        @foreach($emailTemplates as $template)
-                        <s-option value="{{ $template->id }}">
-                            {{ $template->name }}
-                        </s-option>
-                        @endforeach
-                    </s-option-group>
-
-                    <s-option-group label="Texnity" data-group="texnity">
-                        @foreach($texnityTemplates as $template)
-                        <s-option value="{{ $template }}">
-                            {{ $template }}
-                        </s-option>
-                        @endforeach
-                    </s-option-group>
+                    @foreach($emailTemplates as $template)
+                    <s-option value="{{ $template->id }}">
+                        {{ $template->name }}
+                    </s-option>
+                    @endforeach
                 </s-select>
             </s-stack>
         </s-section>
